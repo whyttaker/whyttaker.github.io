@@ -11,13 +11,12 @@ body {
 
   }
 
-  header, section, nav, ul, li, img, audio {
+  header, section, nav, img, audio {
 
     width: 100%;
     max-width: 600px;
     margin: 30px 0;
     text-align: center;
-
   }
   header, section{
     background-color: rgba(0, 0, 0, 0.4);
@@ -36,6 +35,7 @@ body {
   audio{
     width: 70%;
     color: black;
+    
   }
   
 
