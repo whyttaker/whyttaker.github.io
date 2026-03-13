@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+  <title>Availago &mdash; Whittaker Worland</title>
+</head>
+<body class="subpage">
+
+  <video class="bg-video" autoplay muted loop playsinline>
+    <source src="background.mp4" type="video/mp4">
+  </video>
+
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar">
+    <div class="sidebar-tab">
+      <span></span><span></span><span></span>
+    </div>
+    <div class="sidebar-inner">
+      <a href="index.html" class="sidebar-logo">WW</a>
+      <div class="sidebar-middle">
+        <div class="sidebar-name">
+          <h2>Whittaker<br>Worland</h2>
+          <p>CS &mdash; UC Irvine</p>
+        </div>
+        <nav class="sidebar-nav">
+          <a href="projects.html" class="active">Projects <span class="nav-arrow">&#8594;</span></a>
+          <a href="experience.html">Experience <span class="nav-arrow">&#8594;</span></a>
+          <a href="tech-stack.html">Tech Stack <span class="nav-arrow">&#8594;</span></a>
+          <a href="resume.html">Resume <span class="nav-arrow">&#8594;</span></a>
+        </nav>
+        <div class="sidebar-social">
+          <a href="https://github.com/whyttaker" target="_blank">GitHub</a>
+          <a href="https://www.linkedin.com/in/whittaker-worland-8360ab235/" target="_blank">LinkedIn</a>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── Main ── -->
+  <main class="main">
+
+    <div class="page-header">
+      <a href="projects.html" class="back a a1">&#8592; Projects</a>
+      <h1 class="a a2">Availago</h1>
+      <p class="desc a a3">Scheduling &amp; social coordination platform &mdash; Python &amp; REST APIs</p>
+    </div>
+
+    <div class="detail-layout">
+
+      <div class="detail-col">
+
+        <div class="detail-block glass has-img a a4">
+          <span class="label">Overview</span>
+          <h2>About the Project</h2>
+          <p>Availago is a scheduling and social coordination platform designed to help groups easily find times to meet. The application allows users to import existing calendars or create schedules within the app, then form groups with friends to identify overlapping availability. The long-term vision for the platform includes integrating with local businesses to suggest activities and automatically book events once a group agrees on a time.</p>
+          <img src="AvailigoCover.png" alt="Availago" class="detail-embedded-img">
+        </div>
+
+        <div class="detail-block glass a a5">
+          <span class="label">Design Process</span>
+          <h2>Design &amp; Vision</h2>
+          <p>The design focused on simplifying the process of coordinating schedules across multiple people, which often requires manual back-and-forth communication. Early design iterations prioritized a clear workflow where users can quickly sync calendars, create groups, and view shared availability. The interface was structured around visualizing overlapping time windows so that groups can immediately identify viable meeting times.</p>
+          <p>The long-term product vision expands beyond scheduling by introducing location-based recommendations and automated bookings, turning the app into a platform that connects social planning with local businesses.</p>
+        </div>
+
+        <div class="detail-block glass a a6">
+          <span class="label">Implementation</span>
+          <h2>Technical Architecture</h2>
+          <p>The system is designed around a backend service that aggregates calendar data and computes shared availability across multiple users. Calendar events are imported and normalized into a unified internal format so that availability can be calculated consistently regardless of the source.</p>
+          <p>Group scheduling works by combining the individual availability of each user and computing overlapping time windows where all members are free. These results are surfaced in the interface as suggested meeting times that the group can vote on or confirm. Future iterations will incorporate integrations with local business APIs, allowing the platform to recommend activities or automatically book reservations once a time slot is selected.</p>
+        </div>
+
+        <div class="detail-block glass a a1">
+          <span class="label">Algorithms &amp; Data Structures</span>
+          <h2>Scheduling Engine</h2>
+          <p>The scheduling engine relies on interval comparison algorithms to determine overlapping availability across multiple users. Calendar events are represented as time intervals that are merged and compared using interval intersection techniques. Efficient data structures are used to process these intervals so the system can quickly compute shared free time even as group size grows.</p>
+          <p>As the platform expands, recommendation systems and ranking algorithms will be used to suggest venues or activities based on location, group preferences, and availability.</p>
+        </div>
+
+        <div class="detail-block glass a a2">
+          <span class="label">Key Engineering Challenges</span>
+          <h2>What Was Hard</h2>
+          <p>One of the main challenges is aggregating calendar data from multiple sources while maintaining a consistent representation of events and availability. Differences in calendar formats and time zones require careful normalization to ensure accurate scheduling results.</p>
+          <p>Another challenge is efficiently computing overlapping availability as group sizes increase. The scheduling engine must remain performant while processing many time intervals across multiple users. Future development will also involve building reliable integrations with external business APIs and designing a booking workflow that ensures availability is confirmed before reservations are made.</p>
+        </div>
+
+        <div class="detail-block glass a a3">
+          <span class="label">Takeaways</span>
+          <h2>What I Learned</h2>
+          <p>Working on Availago has helped me think about product design from both a technical and user-experience perspective. I gained experience designing systems that aggregate data from multiple sources and compute meaningful results for users. The project also reinforced the importance of building scalable backend logic that can support additional platform features such as recommendations and automated bookings.</p>
+        </div>
+
+      </div>
+
+      <!-- Sidebar -->
+      <aside class="detail-sidebar">
+
+        <div class="sidebar-block glass a a4">
+          <h3>Stack</h3>
+          <ul>
+            <li>Python</li>
+            <li>REST APIs</li>
+            <li>Google Calendar API</li>
+            <li>iCal</li>
+            <li>Database Systems</li>
+          </ul>
+        </div>
+
+        <div class="sidebar-block glass a a5">
+          <h3>Systems</h3>
+          <ul>
+            <li>Calendar Aggregation</li>
+            <li>Interval Scheduling</li>
+            <li>Group Availability</li>
+            <li>Cloud Infrastructure</li>
+          </ul>
+        </div>
+
+        <div class="sidebar-block glass a a6">
+          <h3>Type</h3>
+          <p>Personal Project<br>Full-Stack Platform</p>
+        </div>
+
+        <div class="sidebar-block glass a a1">
+          <h3>Roadmap</h3>
+          <ul>
+            <li>Business API integrations</li>
+            <li>Automated bookings</li>
+            <li>Location recommendations</li>
+          </ul>
+        </div>
+
+      </aside>
+
+    </div>
+
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
