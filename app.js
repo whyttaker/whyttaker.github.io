@@ -94,11 +94,12 @@
   });
 })();
 
-/* ── Sidebar slide ───────────────────────────────────────── */
+/* ── Sidebar slide (desktop only) ───────────────────────── */
 const sidebar = document.querySelector('.sidebar');
 if (sidebar) {
-  sidebar.addEventListener('mouseenter', () => sidebar.classList.add('is-open'));
-  sidebar.addEventListener('mouseleave', () => sidebar.classList.remove('is-open'));
+  const isDesktop = () => window.innerWidth > 820;
+  sidebar.addEventListener('mouseenter', () => { if (isDesktop()) sidebar.classList.add('is-open'); });
+  sidebar.addEventListener('mouseleave', () => { if (isDesktop()) sidebar.classList.remove('is-open'); });
 }
 
 /* ── Card 3-D tilt on cursor move ───────────────────────── */
