@@ -400,8 +400,7 @@ body.subpage .sidebar-name {
 .exp-header,
 .exp-team,
 .detail-block,
-.sidebar-block,
-.pane-card {
+.sidebar-block {
   position: relative;
   overflow: hidden;
 }
@@ -413,8 +412,7 @@ body.subpage .sidebar-name {
 .exp-header::after,
 .exp-team::after,
 .detail-block::after,
-.sidebar-block::after,
-.pane-card::after {
+.sidebar-block::after {
   content: '';
   position: absolute;
   inset: 0;
@@ -437,8 +435,7 @@ body.subpage .sidebar-name {
 .exp-header:hover::after,
 .exp-team:hover::after,
 .detail-block:hover::after,
-.sidebar-block:hover::after,
-.pane-card:hover::after {
+.sidebar-block:hover::after {
   animation: shimmer 0.7s ease forwards;
 }
 
@@ -450,8 +447,7 @@ body.subpage .sidebar-name {
 .exp-header > *,
 .exp-team > *,
 .detail-block > *,
-.sidebar-block > *,
-.pane-card > * {
+  .sidebar-block > * {
   position: relative;
   z-index: 1;
 }
@@ -466,13 +462,6 @@ body.subpage .sidebar-name {
   color: var(--accent);
 }
 
-/* ─── Divider ───────────────────────────────────────────── */
-.rule {
-  display: block;
-  height: 1px;
-  background: var(--border);
-  margin: 40px 0;
-}
 
 /* ════════════════════════════════════════════════════════
    HOME PAGE
@@ -617,146 +606,6 @@ body.subpage .sidebar-name {
 }
 .dest-card:hover .dest-arrow { transform: translateX(5px); }
 
-/* ─── Right slide pane (home) ───────────────────────────── */
-.right-pane {
-  position: fixed;
-  right: 0;
-  top: 0;
-  height: 100vh;
-  width: 290px;
-  z-index: 55;
-  display: flex;
-  flex-direction: row;
-  transform: translateX(calc(100% - 40px));
-  transition: transform 0.5s var(--ease);
-  background: rgba(6, 8, 15, 0.72);
-  backdrop-filter: blur(28px);
-  -webkit-backdrop-filter: blur(28px);
-  border-left: 1px solid var(--border);
-}
-
-.right-pane.is-open {
-  transform: translateX(0);
-}
-
-/* the thin visible tab on the right edge */
-.right-pane-tab {
-  width: 40px;
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  cursor: default;
-}
-
-/* three small dashes as the tab indicator */
-.right-pane-tab span {
-  display: block;
-  width: 12px;
-  height: 1px;
-  background: var(--muted);
-  transition: background 0.2s, width 0.2s;
-}
-.right-pane.is-open .right-pane-tab span {
-  background: var(--accent);
-  width: 16px;
-}
-
-/* pane content */
-.right-pane-content {
-  flex: 1;
-  padding: 80px 24px 40px 20px;
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-  gap: 10px;
-}
-
-.right-pane-content > .label {
-  margin-bottom: 16px;
-}
-
-/* cards inside the pane */
-.pane-card {
-  display: block;
-  padding: 20px 18px;
-  text-decoration: none;
-  color: var(--text);
-  border-radius: var(--radius);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  position: relative;
-  overflow: hidden;
-  transition: border-color 0.22s, background 0.22s, transform 0.22s var(--ease);
-}
-
-.pane-card::before {
-  content: '';
-  position: absolute;
-  left: 0; top: 0; bottom: 0;
-  width: 2px;
-  background: var(--accent);
-  transform: scaleY(0);
-  transform-origin: bottom;
-  transition: transform 0.25s var(--ease);
-}
-
-.pane-card:hover {
-  background: var(--surface-hover);
-  border-color: var(--border-hover);
-  transform: translateX(-3px);
-}
-.pane-card:hover::before { transform: scaleY(1); }
-
-.pane-card .dest-num {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.58rem;
-  color: var(--accent);
-  letter-spacing: 0.1em;
-  margin-bottom: 8px;
-  display: block;
-  opacity: 0.7;
-}
-
-.pane-card h3 {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 1.3rem;
-  font-weight: 700;
-  line-height: 1.1;
-  margin-bottom: 6px;
-}
-
-.pane-card p {
-  font-size: 0.75rem;
-  color: var(--muted);
-  line-height: 1.55;
-}
-
-.pane-card .dest-arrow {
-  display: inline-block;
-  margin-top: 14px;
-  font-size: 0.72rem;
-  color: var(--accent);
-  transition: transform 0.2s var(--ease);
-}
-.pane-card:hover .dest-arrow { transform: translateX(4px); }
-
-/* mobile: always show pane inline */
-@media (max-width: 820px) {
-  .right-pane {
-    position: static;
-    transform: none;
-    width: 100%;
-    height: auto;
-    flex-direction: column;
-    border-left: none;
-    border-top: 1px solid var(--border);
-  }
-  .right-pane-tab { display: none; }
-  .right-pane-content { padding: 24px; }
-}
 
 /* ════════════════════════════════════════════════════════
    SUBPAGE HEADER
@@ -816,10 +665,6 @@ body.subpage .sidebar-name {
   border-color: var(--border-hover);
 }
 
-.proj-thumb-gradient {
-  min-height: 140px;
-  flex-shrink: 0;
-}
 
 .proj-thumb {
   width: 100%;
@@ -952,16 +797,6 @@ body.subpage .sidebar-name {
   color: var(--muted);
   line-height: 1.8;
 }
-
-.detail-img {
-  width: 100%;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  display: block;
-  filter: brightness(0.88);
-  transition: filter 0.2s;
-}
-.detail-img:hover { filter: brightness(1); }
 
 .detail-sidebar {
   position: sticky;
@@ -1154,41 +989,6 @@ body.subpage .sidebar-name {
 /* ════════════════════════════════════════════════════════
    RESUME PAGE
 ═════════════════════════════════════════════════════════ */
-.resume-actions {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 28px;
-}
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-family: 'Syne', sans-serif;
-  font-size: 0.78rem;
-  font-weight: 600;
-  text-decoration: none;
-  transition: opacity 0.2s, transform 0.2s;
-  cursor: pointer;
-  border: none;
-  letter-spacing: 0.04em;
-}
-.btn-accent {
-  background: var(--accent);
-  color: #06080f;
-}
-.btn-accent:hover { opacity: 0.88; transform: translateY(-2px); }
-
-.btn-ghost {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  color: var(--text);
-  backdrop-filter: blur(12px);
-}
-.btn-ghost:hover { background: var(--surface-hover); transform: translateY(-2px); }
-
 /* ── Resume single card ── */
 .rv-card {
   padding: 36px 40px;
@@ -1416,295 +1216,6 @@ body.subpage .sidebar-name {
   margin-right: 4px;
 }
 
-/* download button row */
-.resume-dl {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 60px;
-}
-
-/* ── Resume identity card (old, kept for compat) ── */
-.resume-identity {
-  display: grid;
-  grid-template-columns: 220px 1fr;
-  gap: 0;
-  margin-bottom: 40px;
-  overflow: hidden;
-}
-
-.resume-photo-wrap {
-  position: relative;
-  overflow: hidden;
-}
-
-.resume-photo {
-  width: 100%;
-  height: 100%;
-  min-height: 280px;
-  object-fit: cover;
-  object-position: center top;
-  display: block;
-  filter: grayscale(1) brightness(0.88) contrast(1.08);
-  transition: filter 0.4s ease;
-}
-.resume-photo-wrap:hover .resume-photo {
-  filter: grayscale(1) brightness(0.98) contrast(1.12);
-}
-
-.resume-identity-info {
-  padding: 36px 40px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 0;
-  border-left: 1px solid var(--border);
-}
-
-.resume-name {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: clamp(2.2rem, 3.5vw, 3.2rem);
-  font-weight: 700;
-  line-height: 1.0;
-  letter-spacing: -0.02em;
-  color: var(--text);
-  margin: 12px 0 24px;
-}
-
-.resume-contact {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.resume-contact-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.68rem;
-  letter-spacing: 0.06em;
-  color: var(--muted);
-  text-decoration: none;
-  transition: color 0.2s;
-}
-a.resume-contact-item:hover { color: var(--accent); }
-
-.resume-contact-icon {
-  font-size: 0.8rem;
-  color: var(--accent);
-  opacity: 0.7;
-  width: 14px;
-  text-align: center;
-  flex-shrink: 0;
-}
-
-/* ── Resume sections ── */
-.resume-section {
-  margin-bottom: 36px;
-}
-
-.resume-section-label {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 14px;
-}
-
-.resume-rule {
-  flex: 1;
-  height: 1px;
-  background: var(--border);
-}
-
-.resume-card {
-  padding: 28px 32px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.resume-card-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.resume-org {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 1.45rem;
-  font-weight: 700;
-  color: var(--text);
-  line-height: 1.1;
-  margin-bottom: 4px;
-}
-
-.resume-role-title {
-  font-size: 0.84rem;
-  font-weight: 600;
-  color: var(--muted);
-}
-
-.resume-card-meta {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 4px;
-  flex-shrink: 0;
-}
-
-.resume-location {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.63rem;
-  letter-spacing: 0.08em;
-  color: var(--muted);
-}
-
-.resume-date {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.63rem;
-  letter-spacing: 0.06em;
-  color: var(--accent);
-  opacity: 0.85;
-}
-
-.resume-team-block {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.resume-team-block + .resume-team-block {
-  border-top: 1px solid var(--border);
-  padding-top: 18px;
-}
-
-.resume-team-label {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.62rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--accent);
-}
-
-.resume-bullets {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 9px;
-}
-.resume-bullets li {
-  font-size: 0.83rem;
-  color: var(--muted);
-  line-height: 1.75;
-  padding-left: 16px;
-  position: relative;
-}
-.resume-bullets li::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 10px;
-  width: 5px;
-  height: 1px;
-  background: var(--accent);
-}
-.resume-bullets li em {
-  font-style: italic;
-  color: var(--text);
-}
-
-.resume-courses {
-  font-size: 0.8rem;
-  color: var(--muted);
-  line-height: 1.75;
-}
-
-.resume-inline-label {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.62rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--accent);
-  margin-right: 6px;
-}
-
-.resume-honors {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 7px;
-}
-
-/* ── Skills card ── */
-.resume-skills-card {
-  gap: 0;
-}
-
-.resume-skill-row {
-  display: grid;
-  grid-template-columns: 110px 1fr;
-  gap: 16px;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--border);
-  align-items: start;
-}
-.resume-skill-row:last-child { border-bottom: none; }
-.resume-skill-row:first-child { padding-top: 0; }
-.resume-skill-row:last-child { padding-bottom: 0; }
-
-.resume-skill-cat {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.6rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--accent);
-  padding-top: 2px;
-  flex-shrink: 0;
-}
-
-.resume-skill-body {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.resume-skill-group {
-  font-size: 0.82rem;
-  color: var(--muted);
-  line-height: 1.65;
-}
-
-.resume-skill-sub {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.58rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--muted);
-  opacity: 0.55;
-  margin-right: 8px;
-}
-
-/* ── Responsive ── */
-@media (max-width: 820px) {
-  .resume-identity {
-    grid-template-columns: 1fr;
-  }
-  .resume-photo {
-    min-height: 240px;
-    max-height: 300px;
-  }
-  .resume-identity-info {
-    border-left: none;
-    border-top: 1px solid var(--border);
-    padding: 28px 24px;
-  }
-  .resume-card {
-    padding: 22px 20px;
-  }
-  .resume-skill-row {
-    grid-template-columns: 90px 1fr;
-  }
-}
 
 /* ════════════════════════════════════════════════════════
    EXPERIENCE PAGE

@@ -113,7 +113,6 @@ const TILT_SEL = [
   '.exp-team',
   '.detail-block',
   '.sidebar-block',
-  '.pane-card',
 ].join(', ');
 
 const MAX_TILT = 6;
