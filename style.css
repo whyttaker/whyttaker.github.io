@@ -1529,6 +1529,14 @@ body.light .rv-download:hover {
   .detail-layout { grid-template-columns: 1fr; }
   .detail-sidebar { position: static; }
 
+  .rv-head { flex-wrap: wrap; }
+  .rv-download {
+    margin-left: 0;
+    padding: 9px 14px;
+    font-size: 0.6rem;
+  }
+  .rv-download-label { display: none; }
+
   .exp-header { flex-direction: column; }
   .exp-teams { padding-left: 14px; margin-left: 8px; }
   .exp-team::before { left: -20px; }

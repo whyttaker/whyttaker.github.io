@@ -94,6 +94,30 @@
   });
 })();
 
+/* ── Centralised nav links ───────────────────────────────── */
+(function () {
+  const NAV = [
+    { label: 'Projects',   href: '/pages/projects/projects.html' },
+    { label: 'Experience', href: '/pages/experience/experience.html' },
+    { label: 'Tech Stack', href: '/pages/tech-stack/tech-stack.html' },
+    { label: 'Resume',     href: '/pages/resume/resume.html' },
+  ];
+
+  const nav = document.querySelector('.sidebar-nav');
+  if (!nav) return;
+
+  const path = window.location.pathname;
+
+  nav.innerHTML = NAV.map(({ label, href }) => {
+    const active = path.endsWith(href) || path === href ? ' class="active"' : '';
+    return `<a href="${href}"${active}>${label} <span class="nav-arrow">&#8594;</span></a>`;
+  }).join('');
+
+  // Also fix the sidebar logo link to always point home
+  const logo = document.querySelector('.sidebar-logo');
+  if (logo) logo.href = '/index.html';
+})();
+
 /* ── Sidebar slide (desktop only) ───────────────────────── */
 const sidebar = document.querySelector('.sidebar');
 if (sidebar) {
