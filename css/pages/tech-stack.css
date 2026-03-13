@@ -1,0 +1,144 @@
+/* ─── Spotlight grid ─────────────────────────────────────── */
+.stack-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  position: relative;
+}
+
+.stack-grid::before {
+  content: '';
+  position: fixed;
+  width: 700px;
+  height: 700px;
+  border-radius: 50%;
+  background: radial-gradient(circle,
+    rgba(79, 195, 247, 0.055) 0%,
+    transparent 65%
+  );
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  left: var(--spotlight-x, -9999px);
+  top:  var(--spotlight-y, -9999px);
+  z-index: 0;
+  transition: left 0.08s linear, top 0.08s linear;
+}
+
+.stack-section {
+  display: flex;
+  align-items: flex-start;
+  gap: 28px;
+  position: relative;
+  z-index: 1;
+}
+
+.stack-section-title {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+  opacity: 0.7;
+  padding-top: 10px;
+  width: 100px;
+  flex-shrink: 0;
+  text-align: right;
+  border-right: 1px solid var(--border);
+  padding-right: 20px;
+}
+
+.stack-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  flex: 1;
+}
+
+/* ─── Stack item card ────────────────────────────────────── */
+.stack-item {
+  position: relative;
+  overflow: hidden;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: default;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  transition:
+    border-color 0.3s ease,
+    box-shadow 0.3s ease,
+    opacity 0.3s ease,
+    transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* per-card local cursor glow */
+.stack-item::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    90px circle at var(--card-x, -100px) var(--card-y, -100px),
+    rgba(79, 195, 247, 0.22),
+    transparent 100%
+  );
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  pointer-events: none;
+  z-index: 0;
+}
+.stack-grid:hover .stack-item::before { opacity: 1; }
+.stack-item > * { position: relative; z-index: 1; }
+
+.stack-item-name {
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  transition: color 0.25s;
+}
+
+.stack-item-sub {
+  font-family: var(--font-mono);
+  font-size: 0.54rem;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+  margin-top: 2px;
+  white-space: nowrap;
+  transition: color 0.25s;
+}
+
+/* ─── Group highlight states (set by JS) ─────────────────── */
+.stack-item.is-active {
+  border-color: var(--border-hover);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(79, 195, 247, 0.15) inset;
+  transform: translateY(-3px) scale(1.06);
+}
+.stack-item.is-active .stack-item-name { color: var(--text); }
+.stack-item.is-active .stack-item-sub  { color: var(--accent); opacity: 0.9; }
+
+.stack-item.is-related {
+  border-color: rgba(79, 195, 247, 0.2);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  transform: translateY(-1px) scale(1.02);
+}
+.stack-item.is-related .stack-item-name { color: var(--text); }
+
+.stack-item.is-unrelated {
+  opacity: 0.22;
+  transform: scale(0.97);
+}
+
+/* ─── Mobile ─────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .stack-section { flex-direction: column; gap: 12px; }
+  .stack-section-title {
+    width: auto;
+    text-align: left;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    padding-right: 0;
+    padding-bottom: 8px;
+  }
+}
