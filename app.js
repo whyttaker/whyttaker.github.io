@@ -10,7 +10,7 @@
   lightVideo.muted    = true;
   lightVideo.loop     = true;
   lightVideo.setAttribute('playsinline', '');
-  lightVideo.innerHTML = '<source src="alternate background.mp4" type="video/mp4">';
+  lightVideo.innerHTML = '<source src="/videos/alternate background.mp4" type="video/mp4">';
   if (darkVideo) darkVideo.after(lightVideo);
   else document.body.prepend(lightVideo);
   lightVideo.play().catch(() => {});
