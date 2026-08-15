@@ -49,10 +49,20 @@ import { site, links } from '../../data/site';
         <div class="contact__detail">
           <dt class="t-mono">Resume</dt>
           <dd>
-            <a class="contact__link" href={site.resumePdf} download>
-              Download PDF
-              <span class="contact__arrow" aria-hidden="true">&#8595;</span>
-            </a>
+            <ul class="contact__links">
+              <li>
+                <a class="contact__link" href="/resume/">
+                  Read on the site
+                  <span class="contact__arrow" aria-hidden="true">&#8594;</span>
+                </a>
+              </li>
+              <li>
+                <a class="contact__link" href={site.resumePdf} download>
+                  Download PDF
+                  <span class="contact__arrow" aria-hidden="true">&#8595;</span>
+                </a>
+              </li>
+            </ul>
           </dd>
         </div>
 

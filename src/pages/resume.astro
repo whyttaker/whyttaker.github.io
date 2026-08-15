@@ -1,0 +1,330 @@
+---
+import Base from '../layouts/Base.astro';
+import { site, links } from '../data/site';
+import { experience } from '../data/experience';
+import { education, skills, resumeProjects, leadership } from '../data/resume';
+---
+
+<Base
+  title="Resume"
+  description={`Resume for ${site.name} — ${site.role} at ${site.company}.`}
+>
+  <article class="resume">
+    <div class="shell">
+      <a class="resume__back t-mono" href="/">
+        <span aria-hidden="true">&#8592;</span> Home
+      </a>
+
+      <div class="sheet matte">
+        {/* Head */}
+        <header class="sheet__head">
+          <div>
+            <h1 class="sheet__name t-h2">{site.name}</h1>
+            <p class="sheet__role">{site.role} · {site.company}</p>
+          </div>
+          <a class="sheet__download t-mono" href={site.resumePdf} download data-magnetic>
+            Download PDF <span aria-hidden="true">&#8595;</span>
+          </a>
+        </header>
+
+        <ul class="sheet__contact t-meta">
+          <li><a href={`mailto:${site.email}`}>{site.email}</a></li>
+          <li><a href={`tel:${site.phone.replace(/-/g, '')}`}>{site.phone}</a></li>
+          {
+            links.map((l) => (
+              <li>
+                <a href={l.href} target="_blank" rel="noreferrer noopener">
+                  {l.label}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+
+        {/* Education */}
+        <section class="block">
+          <h2 class="block__title t-mono">Education</h2>
+          <div class="row">
+            <p class="row__org">{education.org}</p>
+            <span class="row__meta t-mono">{education.location}</span>
+          </div>
+          <p class="row__sub">{education.degree}</p>
+          <p class="row__detail">Courses: {education.courses}</p>
+          <p class="row__detail">Honors: {education.honors}</p>
+        </section>
+
+        {/* Skills */}
+        <section class="block">
+          <h2 class="block__title t-mono">Skills</h2>
+          <dl class="skills">
+            {
+              skills.map((s) => (
+                <div class="skills__row">
+                  <dt class="t-mono">{s.cat}</dt>
+                  <dd>{s.value}</dd>
+                </div>
+              ))
+            }
+          </dl>
+        </section>
+
+        {/* Experience — same source of truth as the home page timeline. */}
+        <section class="block">
+          <h2 class="block__title t-mono">Experience</h2>
+          {
+            experience.map((role) => (
+              <div class="job">
+                <div class="row">
+                  <p class="row__org">
+                    {role.org} — {role.role}
+                  </p>
+                  <span class="row__meta t-mono">
+                    {role.location} · {role.period}
+                  </span>
+                </div>
+                {role.teams.map((team) => (
+                  <div class="job__team">
+                    {team.name && <p class="job__team-name t-mono">{team.name}</p>}
+                    <ul class="bullets">
+                      {team.bullets.map((b) => (
+                        <li>{b}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            ))
+          }
+        </section>
+
+        {/* Projects */}
+        <section class="block">
+          <h2 class="block__title t-mono">Projects</h2>
+          <ul class="bullets">
+            {resumeProjects.map((p) => <li>{p}</li>)}
+          </ul>
+        </section>
+
+        {/* Leadership */}
+        <section class="block">
+          <h2 class="block__title t-mono">Leadership &amp; Teamwork</h2>
+          <ul class="bullets">
+            {leadership.map((l) => <li>{l}</li>)}
+          </ul>
+        </section>
+      </div>
+    </div>
+  </article>
+</Base>
+
+<style>
+  .resume {
+    padding-block: calc(var(--s-24) + 2rem) var(--sp-section);
+  }
+
+  .resume__back {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: var(--s-8);
+    color: var(--bone-55);
+    transition: color var(--d-base) var(--e-out);
+  }
+
+  .resume__back:hover {
+    color: var(--bone);
+  }
+
+  /* One continuous document sheet rather than a stack of cards — this page is
+     explicitly the printable view. */
+  .sheet {
+    max-width: 60rem;
+    padding: clamp(1.5rem, 4vw, 3.5rem);
+  }
+
+  .sheet__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--s-4);
+  }
+
+  .sheet__role {
+    margin-top: 0.35rem;
+    color: var(--bone-70);
+  }
+
+  .sheet__download {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1rem;
+    border-radius: var(--r-pill);
+    background: var(--surface-02);
+    color: var(--bone);
+    box-shadow:
+      0 1px 0 rgba(237, 232, 224, 0.07) inset,
+      0 -1px 0 rgba(0, 0, 0, 0.6) inset;
+  }
+
+  .sheet__contact {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s-4);
+    margin-top: var(--s-4);
+    padding-bottom: var(--s-6);
+    border-bottom: 1px solid var(--bone-08);
+  }
+
+  .sheet__contact a {
+    color: var(--bone-55);
+    transition: color var(--d-base) var(--e-out);
+  }
+
+  .sheet__contact a:hover {
+    color: var(--bone);
+  }
+
+  /* --- Blocks -------------------------------------------------------------- */
+  .block {
+    padding-block: var(--s-8);
+    border-bottom: 1px solid var(--bone-08);
+  }
+
+  .block:last-child {
+    border-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  .block__title {
+    margin-bottom: var(--s-4);
+    color: var(--bone-22);
+  }
+
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--s-3);
+  }
+
+  .row__org {
+    font-family: var(--font-display);
+    font-size: 1.0625rem;
+    font-weight: 600;
+    letter-spacing: -0.012em;
+    color: var(--bone);
+  }
+
+  .row__meta {
+    color: var(--bone-55);
+  }
+
+  .row__sub {
+    margin-top: 0.2rem;
+    font-size: var(--t-meta);
+    color: var(--bone-70);
+  }
+
+  .row__detail {
+    margin-top: 0.4rem;
+    font-size: var(--t-meta);
+    color: var(--bone-55);
+    text-wrap: pretty;
+  }
+
+  /* --- Skills --------------------------------------------------------------- */
+  .skills {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-3);
+  }
+
+  .skills__row {
+    display: grid;
+    grid-template-columns: 9rem 1fr;
+    gap: var(--s-4);
+    align-items: baseline;
+  }
+
+  .skills__row dt {
+    color: var(--bone-22);
+  }
+
+  .skills__row dd {
+    font-size: var(--t-meta);
+    color: var(--bone-70);
+    text-wrap: pretty;
+  }
+
+  /* --- Jobs ----------------------------------------------------------------- */
+  .job + .job {
+    margin-top: var(--s-8);
+  }
+
+  .job__team {
+    margin-top: var(--s-3);
+  }
+
+  .job__team-name {
+    margin-bottom: var(--s-2);
+    color: var(--bone-55);
+    text-transform: none;
+    letter-spacing: 0.03em;
+  }
+
+  .bullets {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-2);
+  }
+
+  .bullets li {
+    position: relative;
+    padding-left: var(--s-6);
+    font-size: var(--t-meta);
+    line-height: 1.6;
+    color: var(--bone-70);
+    text-wrap: pretty;
+  }
+
+  .bullets li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.7em;
+    width: 0.75rem;
+    height: 1px;
+    background: var(--bone-22);
+  }
+
+  @media (max-width: 40rem) {
+    .skills__row {
+      grid-template-columns: 1fr;
+      gap: var(--s-1);
+    }
+  }
+
+  /* --- Print ----------------------------------------------------------------
+     Someone will hit Cmd+P on this page. Give them a document, not a dark
+     screenshot. */
+  @media print {
+    .resume {
+      padding: 0;
+    }
+
+    .resume__back,
+    .sheet__download {
+      display: none;
+    }
+
+    .sheet {
+      max-width: none;
+      padding: 0;
+      background: none;
+      box-shadow: none;
+    }
+  }
+</style>

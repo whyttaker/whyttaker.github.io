@@ -17,7 +17,9 @@ const projects = (await getCollection('projects')).sort(
         projects.map((p) => (
           <li class="work__row" data-work-row={p.id}>
             <a class="work__link" href={`/work/${p.id}/`}>
-              <div class="work__media">
+              {/* Paired with the same name on the case study cover, so the
+                  image morphs across the navigation rather than reloading. */}
+              <div class="work__media" style={`view-transition-name: cover-${p.id}`}>
                 <Image
                   src={p.data.cover}
                   alt={p.data.coverAlt}

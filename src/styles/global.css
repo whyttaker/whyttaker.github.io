@@ -4,6 +4,37 @@
 @import './nav.css';
 
 /* ===========================================================================
+   VIEW TRANSITIONS
+   Native MPA transitions rather than a client-side router: this is a static
+   site, and the router would cost JS to reimplement navigation the browser
+   already does. Unsupported engines simply navigate normally.
+   =========================================================================== */
+@view-transition {
+  navigation: auto;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 320ms;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* A project cover morphs from its row on the home page into the case study
+   header. Pairing is by shared view-transition-name, set per project id. */
+::view-transition-group(*) {
+  animation-duration: 420ms;
+  animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
+/* ===========================================================================
    RESET
    =========================================================================== */
 *,
@@ -236,6 +267,48 @@ ol {
 
 [data-magnetic]:active {
   --press: 0.975;
+}
+
+/* ===========================================================================
+   PRINT
+   Someone will hit Cmd+P on the resume. An OLED-black page prints as a wall of
+   toner, so the whole token set flips to ink-on-paper.
+   =========================================================================== */
+@media print {
+  :root {
+    --void: #fff;
+    --surface-00: #fff;
+    --surface-01: #fff;
+    --surface-02: #fff;
+    --surface-03: #fff;
+    --bone: #101010;
+    --bone-70: #333;
+    --bone-55: #555;
+    --bone-22: #999;
+    --bone-08: #ddd;
+    --shadow-inset: none;
+    --shadow-ambient: none;
+    --shadow-lifted: none;
+  }
+
+  body {
+    background: #fff;
+    color: #333;
+  }
+
+  .grain,
+  .vignette,
+  .nav,
+  .footer,
+  .skip-link,
+  .strata,
+  .glass-filter-defs {
+    display: none !important;
+  }
+
+  a {
+    color: inherit;
+  }
 }
 
 .visually-hidden {
