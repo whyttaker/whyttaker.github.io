@@ -46,6 +46,7 @@ export default function CopyEmail({ email }: Props) {
         className="copy__btn glass glass--pill"
         onClick={copy}
         data-state={state}
+        data-magnetic
       >
         {/* The live region announces the result without moving focus. */}
         <span className="copy__label" key={label}>

@@ -97,14 +97,11 @@ import { site, links } from '../../data/site';
     font-size: 0.875rem;
     letter-spacing: 0.02em;
     color: var(--bone);
+    /* transform itself is owned by [data-magnetic] in global.css, which
+       composes the magnetic offset with the --press scale set on :active. */
     transition:
       transform var(--d-fast) var(--e-snap),
       box-shadow var(--d-base) var(--e-out);
-  }
-
-  /* Compression on press. Small, immediate, and the whole point. */
-  .contact__actions :global(.copy__btn:active) {
-    transform: scale(0.975);
   }
 
   .contact__actions :global(.copy__btn[data-state='copied']) {

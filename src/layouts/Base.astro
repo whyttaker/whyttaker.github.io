@@ -91,7 +91,12 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
 
     <script>
       import { initGlassLighting } from '../scripts/glass-lighting';
+      import { initSmoothScroll } from '../scripts/smooth-scroll';
+      import { initMagnetic } from '../scripts/magnetic';
+
+      initSmoothScroll();
       initGlassLighting();
+      initMagnetic();
     </script>
   </body>
 </html>

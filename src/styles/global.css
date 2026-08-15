@@ -227,6 +227,17 @@ ol {
   margin-top: var(--s-4);
 }
 
+/* Magnetic offset is published by magnetic.ts as custom properties so each
+   element composes it with whatever transforms it already has. */
+[data-magnetic] {
+  transform: translate3d(var(--mag-x, 0), var(--mag-y, 0), 0)
+    scale(var(--press, 1));
+}
+
+[data-magnetic]:active {
+  --press: 0.975;
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;

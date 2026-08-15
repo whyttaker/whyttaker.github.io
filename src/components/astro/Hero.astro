@@ -1,5 +1,12 @@
 ---
 import { site, strata } from '../../data/site';
+import StrataCanvas from '../react/StrataCanvas';
+
+const plateSpecs = strata.map((s) => ({
+  id: s.id,
+  label: s.label,
+  metric: s.metric,
+}));
 
 /*
   The hero is built in two layers that are deliberately independent:
@@ -34,7 +41,9 @@ import { site, strata } from '../../data/site';
         ))
       }
     </div>
-    <div class="hero__canvas-mount" data-strata-canvas></div>
+    <div class="hero__canvas-mount" data-strata-canvas>
+      <StrataCanvas client:visible plates={plateSpecs} />
+    </div>
   </div>
 
   <div class="shell hero__content">
@@ -89,6 +98,19 @@ import { site, strata } from '../../data/site';
     inset: 0;
     /* Reserved box — the canvas never causes layout shift when it arrives. */
     pointer-events: auto;
+  }
+
+  /* The canvas fades up over the CSS baseline instead of replacing it, so
+     nothing pops when three.js finishes initialising. */
+  .hero__canvas-mount :global(.strata) {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 700ms var(--e-out);
+  }
+
+  .hero__canvas-mount :global(.strata[data-ready]) {
+    opacity: 1;
   }
 
   /* --- CSS strata -------------------------------------------------------
