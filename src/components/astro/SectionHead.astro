@@ -7,14 +7,21 @@ interface Props {
 const { label, id, count } = Astro.props;
 ---
 
+{/* A real <h2>. These were spans, which left the page jumping h1 → h3 and put
+    section names outside the document outline a screen reader navigates by. */}
 <div class="section-head">
-  <span class="t-mono" id={id}>{label}</span>
+  <h2 class="section-head__label t-mono" id={id}>{label}</h2>
   <span class="section-head__rule" aria-hidden="true"></span>
   {count && <span class="t-mono section-head__count">{count}</span>}
 </div>
 
 <style>
+  .section-head__label {
+    font-weight: 500;
+    color: var(--bone-55);
+  }
+
   .section-head__count {
-    color: var(--bone-22);
+    color: var(--bone-55);
   }
 </style>

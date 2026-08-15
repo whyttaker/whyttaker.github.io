@@ -133,7 +133,7 @@ export default function Plates({
     g.scale.setScalar(scale * pullback * (1 - 0.22 * close));
     // Slide back to centre and descend as it closes, so the object leaves
     // through the page rather than drifting off to one side.
-    g.position.x = GROUP_X * scale * pullback * upright;
+    g.position.x = (cheap ? 0 : GROUP_X) * scale * pullback * upright;
     g.position.y = -2.4 * close;
 
     const n = plates.length;
@@ -233,7 +233,11 @@ export default function Plates({
             )}
           </RoundedBox>
 
-          {/* The etching, floated just clear of the front face. */}
+          {/* The etching, floated just clear of the front face. Dropped on
+              phones for the same reason the CSS baseline drops it: the sheets
+              compress faster than the line-height and the lettering runs off
+              the frame. Every metric it carries is restated below. */}
+          {!cheap && (
           <mesh position={[0, 0.2, PLATE_D / 2 + 0.006]}>
             <planeGeometry args={[PLATE_W * 0.92, (PLATE_W * 0.92) / LABEL_ASPECT]} />
             <meshBasicMaterial
@@ -244,6 +248,7 @@ export default function Plates({
               opacity={hovered === null || hovered === i ? 1 : 0.35}
             />
           </mesh>
+          )}
         </group>
       ))}
     </group>

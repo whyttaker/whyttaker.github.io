@@ -1,0 +1,31 @@
+# Whittaker Worland
+
+> Software Development Engineer at Amazon (San Diego). Builds scalable
+> distributed systems and AI-powered tooling for financial infrastructure
+> handling hundreds of millions of daily transactions. B.S. Computer Science,
+> UC Irvine, with a minor in Game Design.
+
+Currently on Seller Partner Services — Financial Foundational Services, where
+he launched a new high-throughput region for a financial data aggregation
+pipeline handling 100M+ daily requests, with a zero-downtime cutover across
+200+ downstream client teams and roughly $2.76M in annual cost reduction.
+Previously architected SimBot, an event-driven automation platform on AWS
+Bedrock, and interned at B.well Inc on Epic FHIR health-data integration.
+
+## Pages
+
+- [Home](https://whyttaker.github.io/): Work, experience, about, stack, contact.
+- [Resume](https://whyttaker.github.io/resume/): Full background, printable.
+
+## Case studies
+
+- [The Ninth Circle](https://whyttaker.github.io/work/ninth-circle/): Roguelike action game in Unreal Engine 5. 1st place, UC Irvine Video Game Design Competition.
+- [Quantum Leap](https://whyttaker.github.io/work/quantum-leap/): Puzzle platformer built on a deterministic replay system.
+- [Retro Racer](https://whyttaker.github.io/work/retro-racer/): Multiplayer racing game in Unity; led a team of four.
+- [Availago](https://whyttaker.github.io/work/availago/): Scheduling platform computing group availability by interval intersection.
+
+## Contact
+
+- Email: whyttaker@gmail.com
+- GitHub: https://github.com/whyttaker
+- LinkedIn: https://www.linkedin.com/in/whittaker-worland-8360ab235/

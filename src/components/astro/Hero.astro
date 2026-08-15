@@ -17,8 +17,8 @@ const plateSpecs = strata.map((s) => ({
      its own rather than like a placeholder.
 
   2. A WebGL canvas that mounts on top and takes over once it is ready
-     (StrataCanvas, hydrated client:visible). It fades in over the CSS layer,
-     so nothing pops and first paint never waits on three.js.
+     (StrataCanvas, hydrated client:idle so it never competes with first paint).
+     It fades in over the CSS layer, so nothing pops.
 
   The name and role are real DOM text in front of both layers — never geometry,
   never canvas-rendered. The visual can fail completely and the hero still
@@ -42,7 +42,7 @@ const plateSpecs = strata.map((s) => ({
       }
     </div>
     <div class="hero__canvas-mount" data-strata-canvas>
-      <StrataCanvas client:visible plates={plateSpecs} />
+      <StrataCanvas client:idle plates={plateSpecs} />
     </div>
   </div>
 
@@ -238,7 +238,7 @@ const plateSpecs = strata.map((s) => ({
   }
 
   .hero__dot {
-    color: var(--bone-22);
+    color: var(--bone-55);
   }
 
   .hero__name {
@@ -269,7 +269,7 @@ const plateSpecs = strata.map((s) => ({
 
   .hero__hint {
     margin-top: var(--s-8);
-    color: var(--bone-22);
+    color: var(--bone-55);
     /* Only meaningful once the canvas is live and draggable. */
     opacity: 0;
     transition: opacity var(--d-slow) var(--e-out);
@@ -277,6 +277,14 @@ const plateSpecs = strata.map((s) => ({
 
   :global([data-strata-ready]) .hero__hint {
     opacity: 1;
+  }
+
+  /* Drag is disabled under reduced motion, so promising it would be a false
+     affordance. The scene is still composed and rendered — just not draggable. */
+  @media (prefers-reduced-motion: reduce) {
+    :global([data-strata-ready]) .hero__hint {
+      opacity: 0;
+    }
   }
 
   :global([data-strata-ready]) .hero__plates {
@@ -345,6 +353,15 @@ const plateSpecs = strata.map((s) => ({
           calc(var(--i) * -52px)
         )
         rotateX(8deg) rotateY(-12deg);
+    }
+  }
+
+  /* The nav pill owns the bottom of the screen on phones and the scroll cue
+     collided with it. The cue is redundant there anyway — the nav is visible
+     from the first frame. */
+  @media (max-width: 48rem) {
+    .hero__scroll {
+      display: none;
     }
   }
 

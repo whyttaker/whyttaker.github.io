@@ -25,7 +25,6 @@ const total = stack.reduce((n, s) => n + s.items.length, 0);
                   class="stack__item"
                   data-stack-item
                   data-groups={item.groups.join(' ')}
-                  tabindex="0"
                 >
                   <span class="stack__name">{item.name}</span>
                   <span class="stack__sub t-mono">{item.sub}</span>
@@ -43,7 +42,7 @@ const total = stack.reduce((n, s) => n + s.items.length, 0);
   .stack__hint {
     margin-top: calc(var(--s-16) * -1 + var(--s-6));
     margin-bottom: var(--s-12);
-    color: var(--bone-22);
+    color: var(--bone-55);
   }
 
   .stack {
@@ -54,7 +53,7 @@ const total = stack.reduce((n, s) => n + s.items.length, 0);
 
   .stack__title {
     margin-bottom: var(--s-4);
-    color: var(--bone-22);
+    color: var(--bone-55);
   }
 
   .stack__items {
@@ -96,7 +95,7 @@ const total = stack.reduce((n, s) => n + s.items.length, 0);
 
   .stack__sub {
     font-size: 0.625rem;
-    color: var(--bone-22);
+    color: var(--bone-55);
   }
 
   /* --- Relatedness states ------------------------------------------------

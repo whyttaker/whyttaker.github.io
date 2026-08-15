@@ -10,10 +10,10 @@ import { site, links } from '../../data/site';
 
     <div class="contact__grid">
       <div>
-        <h2 class="contact__lede t-h1">
+        <p class="contact__lede t-h1">
           Open to conversations about systems, scale, and the products built on
           top of them.
-        </h2>
+        </p>
 
         <div class="contact__actions">
           <CopyEmail client:visible email={site.email} />
@@ -147,12 +147,12 @@ import { site, links } from '../../data/site';
   }
 
   .contact__actions :global(.copy__fallback) {
-    color: var(--bone-22);
+    color: var(--bone-55);
     transition: color var(--d-base) var(--e-out);
   }
 
   .contact__actions :global(.copy__fallback:hover) {
-    color: var(--bone-55);
+    color: var(--bone);
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -170,7 +170,7 @@ import { site, links } from '../../data/site';
 
   .contact__detail dt {
     margin-bottom: var(--s-3);
-    color: var(--bone-22);
+    color: var(--bone-55);
   }
 
   .contact__links {
@@ -192,7 +192,7 @@ import { site, links } from '../../data/site';
   }
 
   .contact__arrow {
-    color: var(--bone-22);
+    color: var(--bone-55);
     transition: transform var(--d-base) var(--e-out);
   }
 

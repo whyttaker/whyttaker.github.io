@@ -59,17 +59,9 @@ export function initStackField(): void {
 
   field.addEventListener('pointerleave', clear);
 
-  /* Keyboard parity: the entries are focusable, so the same relationship is
-     available without a pointer. */
-  field.addEventListener('focusin', (e) => {
-    const el = resolve(e);
-    if (el) focusOn(el as HTMLElement);
-  });
-
-  field.addEventListener('focusout', (e) => {
-    // Only clear when focus actually leaves the field, not when it moves
-    // between entries inside it.
-    const next = (e as FocusEvent).relatedTarget as Node | null;
-    if (!next || !field.contains(next)) clear();
-  });
+  /* Deliberately not focusable. Making all 47 entries tabbable to expose the
+     relatedness highlight put 47 stops between About and Contact for keyboard
+     users — a real cost for an enhancement, on content that is not
+     interactive. The list itself is the information; the highlight is a
+     pointer affordance on top of it. */
 }
