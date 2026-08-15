@@ -1,0 +1,147 @@
+/* ===========================================================================
+   NAV
+   One element in two states. At the top of the page it is a bare header with
+   no material; past the hero it condenses into a floating glass pill. Styles
+   live in a global sheet rather than a scoped Astro block because the markup
+   is rendered by a React island.
+   =========================================================================== */
+
+.nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: var(--z-nav);
+  display: flex;
+  justify-content: center;
+  padding: var(--s-4) var(--gutter);
+  /* The bar itself is not a click target — only the shell inside it. */
+  pointer-events: none;
+}
+
+.nav__shell {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-8);
+  width: 100%;
+  max-width: var(--max-w);
+  padding: var(--s-3) 0;
+  border-radius: var(--r-pill);
+  transition:
+    max-width var(--d-slow) var(--e-out),
+    padding var(--d-slow) var(--e-out),
+    gap var(--d-slow) var(--e-out);
+}
+
+.nav.is-condensed .nav__shell {
+  max-width: 32rem;
+  padding: 0.4rem 0.5rem 0.4rem 1rem;
+  gap: var(--s-4);
+}
+
+/* --- Monogram ------------------------------------------------------------- */
+.nav__mark {
+  flex: none;
+  font-family: var(--font-display);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--bone);
+  transition: opacity var(--d-base) var(--e-out);
+}
+
+.nav__mark:hover {
+  opacity: 0.7;
+}
+
+/* --- Links ---------------------------------------------------------------- */
+.nav__links {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.nav__link {
+  position: relative;
+  display: block;
+  padding: 0.45rem 0.75rem;
+  border-radius: var(--r-pill);
+  font-family: var(--font-mono);
+  font-size: var(--t-mono);
+  font-weight: 500;
+  letter-spacing: var(--ls-mono);
+  text-transform: uppercase;
+  color: var(--bone-55);
+  transition: color var(--d-base) var(--e-out);
+}
+
+.nav__link:hover {
+  color: var(--bone);
+}
+
+.nav__link[data-active] {
+  color: var(--bone);
+}
+
+.nav__label {
+  position: relative;
+  z-index: 1;
+}
+
+/* The sliding indicator. A recessed well rather than a filled tab — the label
+   sits in a dip in the surface instead of on a coloured block. */
+.nav__indicator {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: var(--r-pill);
+  background: rgba(237, 232, 224, 0.07);
+  box-shadow:
+    0 1px 0 rgba(237, 232, 224, 0.07),
+    0 -1px 0 rgba(0, 0, 0, 0.6) inset;
+}
+
+/* --- Mobile ---------------------------------------------------------------
+   A different interaction model, not a shrunken one: the nav moves to the
+   bottom where a thumb can reach it, and it is always a pill. The monogram
+   drops — on a phone the whole page is one scroll, so a "home" affordance in
+   the nav is dead weight. */
+@media (max-width: 48rem) {
+  .nav {
+    top: auto;
+    bottom: 0;
+    padding: var(--s-3) var(--s-3) calc(var(--s-3) + env(safe-area-inset-bottom));
+  }
+
+  .nav__shell,
+  .nav.is-condensed .nav__shell {
+    max-width: 100%;
+    justify-content: center;
+    gap: 0;
+    padding: 0.35rem 0.4rem;
+  }
+
+  .nav__mark {
+    display: none;
+  }
+
+  .nav__links {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .nav__link {
+    padding: 0.5rem 0.45rem;
+    font-size: 0.625rem;
+    letter-spacing: 0.06em;
+  }
+}
+
+@media (max-width: 22rem) {
+  .nav__link {
+    padding: 0.5rem 0.3rem;
+    font-size: 0.5625rem;
+  }
+}
