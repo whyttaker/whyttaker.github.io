@@ -5,6 +5,8 @@ import { useReducedMotion } from 'motion/react';
 import * as THREE from 'three';
 import Plates, { type PlateSpec } from './strata/Plates';
 import { useDragState } from './strata/useDragState';
+import { handoffAt, heroProgress } from './strata/handoff';
+import { subscribeScroll } from '../../scripts/scroll-store';
 
 interface Props {
   plates: PlateSpec[];
@@ -119,6 +121,19 @@ export default function StrataCanvas({ plates }: Props) {
     io.observe(el);
     return () => io.disconnect();
   }, []);
+
+  /* The canvas dissolves on the same curve the geometry closes on. Derived
+     from the shared handoff helper rather than eased here, so the fade and the
+     movement cannot disagree — a few percent of drift and the sheets would
+     still be visible after the object was meant to have gone. */
+  useEffect(() => {
+    const el = host.current;
+    if (!el || !heroEl) return;
+    return subscribeScroll(({ y }) => {
+      const { close } = handoffAt(heroProgress(y, heroEl.offsetHeight));
+      el.style.setProperty('--handoff', String(1 - close));
+    });
+  }, [heroEl]);
 
   /* Flag the document once the canvas has painted, which fades out the CSS
      baseline composition underneath and reveals the drag hint. */

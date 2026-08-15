@@ -109,8 +109,11 @@ const plateSpecs = strata.map((s) => ({
     transition: opacity 700ms var(--e-out);
   }
 
+  /* Two opacities multiply here: the one-time fade-in when three.js is ready,
+     and --handoff, which the scroll store drives to 0 as the object hands the
+     page over to the work section. */
   .hero__canvas-mount :global(.strata[data-ready]) {
-    opacity: 1;
+    opacity: var(--handoff, 1);
   }
 
   /* --- CSS strata -------------------------------------------------------

@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import { createLabelTexture, LABEL_ASPECT } from './labelTexture';
 import { subscribeScroll } from '../../../scripts/scroll-store';
 import type { DragState } from './useDragState';
+import { handoffAt, heroProgress } from './handoff';
 
 export interface PlateSpec {
   id: string;
@@ -55,7 +56,8 @@ export default function Plates({
   /* separation: 0 = resting fan, 1 = fully pulled apart. */
   const sep = useRef(0);
   const spin = useRef({ x: 0, y: 0, vx: 0, vy: 0 });
-  const scrollSep = useRef(0);
+  /* Scroll progress through the hero, shared with the canvas fade. */
+  const progress = useRef(0);
 
   const textures = useMemo(
     () => plates.map((p) => createLabelTexture(p.label, p.metric)),
@@ -71,8 +73,7 @@ export default function Plates({
   useEffect(() => {
     if (!heroEl) return;
     return subscribeScroll(({ y }) => {
-      const h = heroEl.offsetHeight || 1;
-      scrollSep.current = Math.min(Math.max(y / h, 0), 1);
+      progress.current = heroProgress(y, heroEl.offsetHeight);
     });
   }, [heroEl]);
 
@@ -93,7 +94,12 @@ export default function Plates({
     // what the scroll implies. Taking the max rather than summing means a
     // drag part-way down the hero cannot push the fan past its limit.
     const drag = dragRef.current;
-    const target = Math.max(drag.separation, scrollSep.current);
+    const { open, close } = handoffAt(progress.current);
+
+    // A drag can always open the stack, but it cannot fight the handover:
+    // scaling by (1 - close) means the sheets still converge on the way out
+    // even if you are holding the pointer down.
+    const target = Math.max(drag.separation * (1 - close), open);
 
     if (reduced) {
       sep.current = target;
@@ -116,14 +122,19 @@ export default function Plates({
       s.y += s.vy;
     }
 
-    g.rotation.x = 0.19 + s.x;
-    g.rotation.y = -0.33 + s.y;
-    g.rotation.z = 0.026;
+    // Flatten toward face-on as the object hands over.
+    const upright = 1 - close;
+    g.rotation.x = (0.19 + s.x) * upright;
+    g.rotation.y = (-0.33 + s.y) * upright;
+    g.rotation.z = 0.026 * upright;
     /* Pull back slightly as the stack opens. Without this the fan grows past
        the frame at full separation and the outermost sheets get cropped. */
     const pullback = 1 - 0.14 * sep.current;
-    g.scale.setScalar(scale * pullback);
-    g.position.x = GROUP_X * scale * pullback;
+    g.scale.setScalar(scale * pullback * (1 - 0.22 * close));
+    // Slide back to centre and descend as it closes, so the object leaves
+    // through the page rather than drifting off to one side.
+    g.position.x = GROUP_X * scale * pullback * upright;
+    g.position.y = -2.4 * close;
 
     const n = plates.length;
     for (let i = 0; i < n; i++) {
@@ -133,9 +144,11 @@ export default function Plates({
       const t = sep.current;
       const centred = i - (n - 1) / 2;
 
-      p.position.x = i * (REST.x + SPREAD.x * t);
-      p.position.y = centred * (REST.y + SPREAD.y * t);
-      p.position.z = -i * (REST.z + SPREAD.z * t);
+      // REST is scaled by `upright` too, so the sheets do not merely stop
+      // spreading — they converge into a single slab before they go.
+      p.position.x = i * (REST.x * upright + SPREAD.x * t);
+      p.position.y = centred * (REST.y * upright + SPREAD.y * t);
+      p.position.z = -i * (REST.z * upright + SPREAD.z * t);
 
       // The hovered sheet lifts toward the viewer — the only per-plate state
       // change, so it reads clearly without needing a colour shift.
