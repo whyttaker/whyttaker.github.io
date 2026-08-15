@@ -1,0 +1,20 @@
+---
+interface Props {
+  label: string;
+  id?: string;
+  count?: string;
+}
+const { label, id, count } = Astro.props;
+---
+
+<div class="section-head">
+  <span class="t-mono" id={id}>{label}</span>
+  <span class="section-head__rule" aria-hidden="true"></span>
+  {count && <span class="t-mono section-head__count">{count}</span>}
+</div>
+
+<style>
+  .section-head__count {
+    color: var(--bone-22);
+  }
+</style>

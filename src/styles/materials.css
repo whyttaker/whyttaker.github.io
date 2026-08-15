@@ -1,0 +1,109 @@
+/* ===========================================================================
+   MATERIALS — the tactile tier
+   Glass is rationed and lives in glass.css. Everything here is matte, and
+   matte is the default for ~90% of the page. The old site put .glass on all
+   47 stack items and every card; nothing felt special because everything was
+   the same material. These surfaces are what black is made of instead.
+   =========================================================================== */
+
+/* --- Grain field ---------------------------------------------------------
+   One fixed layer over the whole viewport. This is the cheapest and most
+   important trick in the system: it stops large fields of #000 from reading
+   as an absence and makes them read as a surface. */
+.grain {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-grain);
+  pointer-events: none;
+  opacity: 0.035;
+  mix-blend-mode: overlay;
+  background-image: var(--grain-src);
+  background-size: 128px 128px;
+  background-repeat: repeat;
+}
+
+/* A vignette so the edges of the frame fall away and the centre feels lit. */
+.vignette {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-grain);
+  pointer-events: none;
+  background: radial-gradient(
+    120% 90% at 50% 42%,
+    transparent 42%,
+    rgba(0, 0, 0, 0.55) 100%
+  );
+}
+
+/* --- Matte surfaces ------------------------------------------------------
+   Recessed: light catches the TOP edge, shadow falls below → reads inset.
+   Raised:   inverted → reads proud of the page. */
+.matte {
+  position: relative;
+  background: var(--surface-01);
+  border-radius: var(--r-md);
+  box-shadow:
+    var(--shadow-inset),
+    var(--shadow-ambient);
+}
+
+.matte::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    to bottom,
+    var(--bone-22),
+    transparent 32%,
+    transparent 68%,
+    rgba(0, 0, 0, 0.6)
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.matte--raised {
+  background: var(--surface-02);
+  box-shadow:
+    var(--shadow-inset),
+    var(--shadow-lifted);
+}
+
+.matte--flush {
+  background: var(--surface-00);
+  box-shadow: none;
+}
+
+/* --- Engraved -------------------------------------------------------------
+   Text that sits below the surface rather than on it. Used for the stack
+   field and small plaques. The trick is a dark top shadow plus a 1px light
+   bottom highlight — the inverse of embossing. */
+.engraved {
+  color: var(--bone-55);
+  text-shadow:
+    0 -1px 0 rgba(0, 0, 0, 0.9),
+    0 1px 0 rgba(237, 232, 224, 0.07);
+}
+
+/* --- Hairline ------------------------------------------------------------- */
+.hairline {
+  height: 1px;
+  border: 0;
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--bone-22) 12%,
+    var(--bone-22) 88%,
+    transparent
+  );
+}
+
+.hairline--full {
+  background: var(--bone-08);
+}

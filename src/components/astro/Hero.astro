@@ -1,0 +1,335 @@
+---
+import { site, strata } from '../../data/site';
+
+/*
+  The hero is built in two layers that are deliberately independent:
+
+  1. A CSS strata composition — six plates fanned in perspective. This is the
+     baseline. It ships with the HTML, needs no JavaScript, and is what a
+     reduced-motion or no-JS visitor sees. It is composed to look finished on
+     its own rather than like a placeholder.
+
+  2. A WebGL canvas that mounts on top and takes over once it is ready
+     (StrataCanvas, hydrated client:visible). It fades in over the CSS layer,
+     so nothing pops and first paint never waits on three.js.
+
+  The name and role are real DOM text in front of both layers — never geometry,
+  never canvas-rendered. The visual can fail completely and the hero still
+  reads.
+*/
+---
+
+<section class="hero" id="hero">
+  <div class="hero__stage" aria-hidden="true">
+    <div class="hero__plates" data-strata-css>
+      {
+        strata.map((plate, i) => (
+          <div class="plate" data-plate={plate.id} style={`--i:${i}`}>
+            <span class="plate__etch">
+              <span class="plate__label">{plate.label}</span>
+              <span class="plate__rule"></span>
+              <span class="plate__metric">{plate.metric}</span>
+            </span>
+          </div>
+        ))
+      }
+    </div>
+    <div class="hero__canvas-mount" data-strata-canvas></div>
+  </div>
+
+  <div class="shell hero__content">
+    <p class="hero__eyebrow t-mono">
+      {site.role} <span class="hero__dot">·</span>
+      {site.company}
+    </p>
+
+    <h1 class="hero__name t-display">
+      <span class="hero__name-line">Whittaker</span>
+      <span class="hero__name-line">Worland</span>
+    </h1>
+
+    <p class="hero__sub">
+      {site.education}<br />
+      <span class="hero__school">{site.school}</span>
+    </p>
+
+    <p class="hero__hint t-mono" data-hero-hint>Drag to separate</p>
+  </div>
+
+  {/* Deliberately not labelled "Selected work" — it sits directly above the
+      Selected Work section head, and the repetition read as a duplicate. */}
+  <a class="hero__scroll t-mono" href="#work">
+    <span class="hero__scroll-rule" aria-hidden="true"></span>
+    <span>Scroll</span>
+  </a>
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    min-height: 100svh;
+    display: grid;
+    align-items: center;
+    padding-block: var(--s-32) var(--s-24);
+    overflow: clip;
+  }
+
+  /* --- Stage ------------------------------------------------------------ */
+  .hero__stage {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    pointer-events: none;
+  }
+
+  .hero__canvas-mount {
+    position: absolute;
+    inset: 0;
+    /* Reserved box — the canvas never causes layout shift when it arrives. */
+    pointer-events: auto;
+  }
+
+  /* --- CSS strata -------------------------------------------------------
+     Six plates spread like a dealt hand. The fan runs lower-left to
+     upper-right so it sits diagonally against the left-aligned name rather
+     than symmetrically behind it. */
+  .hero__plates {
+    position: relative;
+    width: min(46rem, 82vw);
+    /* Thin sheets, not panels. Strata are layers — a tall plate reads as a
+       card, and six stacked cards is just a deck. */
+    aspect-ratio: 16 / 7;
+    perspective: 1400px;
+    perspective-origin: 60% 45%;
+    transform: translate3d(16%, 2%, 0) rotate(-3deg);
+    transition: opacity var(--d-slow) var(--e-out);
+  }
+
+  .plate {
+    position: absolute;
+    inset: 30% 8%;
+    padding: 0.8rem 1.15rem;
+    border-radius: var(--r-md);
+    /* Etch hugs the trailing edge so the display type can sit in front of the
+       sheets — which is the point — without covering any of the lettering. */
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-end;
+
+    /* The plate body: a very slightly luminous sheet, brighter along the
+       leading edge where light would enter the glass. */
+    background: linear-gradient(
+      135deg,
+      rgba(191, 212, 238, 0.055),
+      rgba(191, 212, 238, 0.012) 38%,
+      rgba(0, 0, 0, 0) 70%
+    );
+    border: 1px solid rgba(191, 212, 238, 0.14);
+    box-shadow:
+      0 1px 0 rgba(237, 232, 224, 0.09) inset,
+      0 30px 60px -40px #000;
+
+    /* Vertical step is tuned against the etch line-height: each plate must
+       clear the one in front by more than a full line, or the labels collide
+       into an unreadable clump. */
+    transform: translate3d(
+        calc(var(--i) * 2.6%),
+        calc(var(--i) * -19%),
+        calc(var(--i) * -68px)
+      )
+      rotateX(11deg) rotateY(-19deg) rotateZ(1.5deg);
+
+    /* Depth cue: further plates sit dimmer, exactly like real stacked glass. */
+    opacity: calc(1 - (var(--i) * 0.115));
+  }
+
+  /* A specular streak across each sheet. Angled against the plate rotation so
+     it reads as a reflection rather than a gradient fill. */
+  .plate::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(
+      104deg,
+      transparent 34%,
+      rgba(237, 232, 224, 0.07) 47%,
+      rgba(191, 212, 238, 0.11) 50%,
+      transparent 62%
+    );
+    pointer-events: none;
+  }
+
+  /* The etch runs along each plate's leading edge on a single line, so the
+     fan reads as a legible ladder of domains rather than stacked paragraphs. */
+  .plate__etch {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    white-space: nowrap;
+  }
+
+  .plate__label {
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(237, 232, 224, 0.66);
+  }
+
+  .plate__rule {
+    width: 1.25rem;
+    height: 1px;
+    background: rgba(191, 212, 238, 0.28);
+  }
+
+  .plate__metric {
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    letter-spacing: 0.04em;
+    color: rgba(191, 212, 238, 0.52);
+  }
+
+  /* --- Content ---------------------------------------------------------- */
+  .hero__content {
+    position: relative;
+    z-index: 3;
+    pointer-events: none;
+  }
+
+  .hero__content > * {
+    pointer-events: auto;
+  }
+
+  .hero__eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: var(--s-6);
+    color: var(--bone-55);
+  }
+
+  .hero__dot {
+    color: var(--bone-22);
+  }
+
+  .hero__name {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: var(--s-8);
+    /* The name has to survive on top of a bright refraction highlight, so it
+       carries its own soft shadow rather than relying on the backdrop. */
+    text-shadow: 0 2px 40px rgba(0, 0, 0, 0.85);
+  }
+
+  .hero__name-line:last-child {
+    /* Indent the surname to echo the diagonal of the plate fan. */
+    margin-left: 0.14em;
+  }
+
+  .hero__sub {
+    font-size: var(--t-body-lg);
+    line-height: 1.5;
+    color: var(--bone-70);
+    max-width: 34ch;
+  }
+
+  .hero__school {
+    color: var(--bone-55);
+    font-size: var(--t-meta);
+  }
+
+  .hero__hint {
+    margin-top: var(--s-8);
+    color: var(--bone-22);
+    /* Only meaningful once the canvas is live and draggable. */
+    opacity: 0;
+    transition: opacity var(--d-slow) var(--e-out);
+  }
+
+  :global([data-strata-ready]) .hero__hint {
+    opacity: 1;
+  }
+
+  :global([data-strata-ready]) .hero__plates {
+    opacity: 0;
+  }
+
+  /* --- Scroll cue ------------------------------------------------------- */
+  .hero__scroll {
+    position: absolute;
+    z-index: 3;
+    bottom: var(--s-8);
+    left: var(--gutter);
+    display: flex;
+    align-items: center;
+    gap: var(--s-4);
+    color: var(--bone-55);
+    transition: color var(--d-base) var(--e-out);
+  }
+
+  .hero__scroll:hover {
+    color: var(--bone);
+  }
+
+  .hero__scroll-rule {
+    display: block;
+    width: 3rem;
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--bone-22));
+    transition: width var(--d-slow) var(--e-out);
+  }
+
+  .hero__scroll:hover .hero__scroll-rule {
+    width: 4.5rem;
+  }
+
+  /* --- Responsive -------------------------------------------------------
+     Mobile is not a shrunken desktop: the fan tightens and rotates upright so
+     it sits behind the type as a texture rather than competing with it. */
+  @media (max-width: 60rem) {
+    /* The etch cannot survive here: at this width the sheets overlap faster
+       than the line-height, and the labels smear into each other. Below the
+       breakpoint the strata become pure material — every metric they carry is
+       stated again in the sections underneath, so nothing is lost. */
+    .plate__etch {
+      display: none;
+    }
+
+    /* Four sheets instead of six. A tighter stack reads as deliberate; six
+       compressed ones read as a rendering fault. */
+    .plate:nth-child(n + 5) {
+      display: none;
+    }
+
+    .hero__plates {
+      width: min(34rem, 96vw);
+      aspect-ratio: 16 / 9;
+      transform: translate3d(4%, -6%, 0) rotate(-2deg);
+      opacity: 0.8;
+    }
+
+    .plate {
+      inset: 26% 6%;
+      transform: translate3d(
+          calc(var(--i) * 3.4%),
+          calc(var(--i) * -13%),
+          calc(var(--i) * -52px)
+        )
+        rotateX(8deg) rotateY(-12deg);
+    }
+  }
+
+  @media (max-width: 40rem) {
+    .hero {
+      padding-block: var(--s-24) var(--s-16);
+    }
+
+    .hero__sub {
+      font-size: var(--t-body);
+    }
+  }
+</style>

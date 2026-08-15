@@ -1,0 +1,43 @@
+---
+/*
+  The refraction filter behind tier-A glass.
+
+  Turbulence at a very low frequency produces a slow, organic warp rather than
+  visible noise; blurring the turbulence before it reaches the displacement map
+  smooths out the high-frequency speckle that would otherwise read as grain
+  instead of glass. Scale is deliberately small — at 18 the background bends
+  enough to look like a material, past ~30 it looks like a heat haze.
+*/
+---
+
+<svg class="glass-filter-defs" aria-hidden="true" focusable="false">
+  <defs>
+    <filter id="lg-refract" x="-12%" y="-12%" width="124%" height="124%" color-interpolation-filters="sRGB">
+      <feTurbulence
+        type="fractalNoise"
+        baseFrequency="0.008 0.012"
+        numOctaves="2"
+        seed="7"
+        result="noise"
+      ></feTurbulence>
+      <feGaussianBlur in="noise" stdDeviation="1.6" result="smooth"></feGaussianBlur>
+      <feDisplacementMap
+        in="SourceGraphic"
+        in2="smooth"
+        scale="18"
+        xChannelSelector="R"
+        yChannelSelector="G"
+      ></feDisplacementMap>
+    </filter>
+  </defs>
+</svg>
+
+<style>
+  .glass-filter-defs {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+</style>

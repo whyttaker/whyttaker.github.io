@@ -1,0 +1,188 @@
+---
+import { Image } from 'astro:assets';
+import SectionHead from './SectionHead.astro';
+import portrait from '../../assets/about/portrait.jpg';
+
+/* Prose ported verbatim from the about card on the old index.html. */
+const honors = [
+  { label: "Dean's List", detail: 'UC Irvine' },
+  { label: 'Scholar-Athlete', detail: 'Division I' },
+  { label: '1st Place', detail: 'UCI Video Game Design Competition' },
+];
+---
+
+<section class="section" id="about" aria-labelledby="about-label">
+  <div class="shell">
+    <SectionHead label="About" id="about-label" />
+
+    <div class="about">
+      <div class="about__prose">
+        <p class="t-lead">
+          Computer Science student at UC Irvine's Donald Bren School of ICS, with a minor
+          in Game Design. Currently a Software Development Engineer at Amazon, where I
+          build and maintain scalable distributed systems and AI-powered tooling for
+          financial infrastructure handling hundreds of millions of daily transactions.
+        </p>
+        <p class="t-body">
+          I'm drawn to the intersection of engineering scale and creative craft — whether
+          that's architecting event-driven pipelines on AWS, leading a game team to win a
+          design competition, or pushing the limits of what LLMs can do in production.
+          I've worked across cloud infrastructure, full-stack development, machine
+          learning, and game development, and I find the most interesting problems tend to
+          live where those disciplines overlap.
+        </p>
+        <p class="t-body">
+          Outside of engineering, I competed as a Division I athlete — an experience that
+          shaped how I think about team dynamics, composure under pressure, and showing up
+          consistently. Dean's List, Scholar-Athlete, and 1st Place at the UC Irvine Video
+          Game Design Competition.
+        </p>
+      </div>
+
+      <aside class="about__side">
+        <figure class="portrait">
+          <Image
+            src={portrait}
+            alt="Whittaker Worland"
+            widths={[320, 560]}
+            sizes="(min-width: 60rem) 22rem, 60vw"
+            loading="lazy"
+            decoding="async"
+            class="portrait__img"
+          />
+        </figure>
+
+        {/* Small debossed plaques rather than badges or skill bars — each one
+            names something that actually happened. */}
+        <ul class="plaques">
+          {
+            honors.map((h) => (
+              <li class="plaque">
+                <span class="plaque__label engraved">{h.label}</span>
+                <span class="plaque__detail t-mono">{h.detail}</span>
+              </li>
+            ))
+          }
+        </ul>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<style>
+  .about {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 16rem;
+    gap: clamp(2.5rem, 6vw, 6rem);
+    align-items: start;
+  }
+
+  .about__prose > * + * {
+    margin-top: var(--s-6);
+  }
+
+  .about__side {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-8);
+  }
+
+  /* --- Portrait ---------------------------------------------------------
+     Set into the page rather than sitting on it: the frame is recessed and
+     the image itself is held back so a face doesn't out-shout the type. */
+  .portrait {
+    position: relative;
+    /* Capped deliberately. At full column width the photograph out-shouts
+       the prose, which is the actual content of this section. */
+    max-width: 16rem;
+    border-radius: var(--r-md);
+    overflow: hidden;
+    background: var(--surface-01);
+    box-shadow:
+      0 1px 0 rgba(237, 232, 224, 0.06) inset,
+      0 0 0 1px rgba(0, 0, 0, 0.8),
+      var(--shadow-ambient);
+  }
+
+  .portrait__img {
+    width: 100%;
+    /* Required: <Image> emits width/height attributes, and without an explicit
+       auto height the attribute height wins and aspect-ratio never resolves. */
+    height: auto;
+    aspect-ratio: 1;
+    object-fit: cover;
+    /* Held back at rest so the one photograph on the page doesn't break the
+       restrained palette; colour returns on hover. */
+    filter: grayscale(0.68) brightness(0.76) contrast(1.06);
+    transition: filter var(--d-slow) var(--e-out);
+  }
+
+  .portrait:hover .portrait__img,
+  .portrait:focus-within .portrait__img {
+    filter: grayscale(0) brightness(0.96) contrast(1);
+  }
+
+  /* --- Plaques ----------------------------------------------------------- */
+  .plaques {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-2);
+  }
+
+  .plaque {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    padding: var(--s-4);
+    border-radius: var(--r-sm);
+    background: var(--surface-00);
+    /* Inverted lighting: dark at the top edge, light at the bottom — the
+       surface reads as pressed into the page. */
+    box-shadow:
+      0 1px 0 rgba(237, 232, 224, 0.05),
+      0 -1px 0 rgba(0, 0, 0, 0.85) inset,
+      0 1px 2px rgba(0, 0, 0, 0.6) inset;
+  }
+
+  .plaque__label {
+    font-family: var(--font-display);
+    font-size: 1.0625rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--bone-70);
+  }
+
+  .plaque__detail {
+    color: var(--bone-22);
+    font-size: 0.6875rem;
+  }
+
+  @media (max-width: 60rem) {
+    .about {
+      grid-template-columns: 1fr;
+    }
+
+    .about__side {
+      flex-direction: row;
+      align-items: flex-start;
+    }
+
+    .portrait {
+      flex: 0 0 40%;
+    }
+
+    .plaques {
+      flex: 1;
+    }
+  }
+
+  @media (max-width: 40rem) {
+    .about__side {
+      flex-direction: column;
+    }
+
+    .portrait {
+      max-width: 14rem;
+    }
+  }
+</style>

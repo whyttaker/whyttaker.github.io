@@ -1,0 +1,141 @@
+/* ===========================================================================
+   LIQUID GLASS — rationed
+   Appears on: the nav, the project HUD, the copy-email control, tooltips,
+   the next-project navigator. Nowhere else. When everything is glass,
+   nothing is.
+
+   Three tiers, selected by a probe that sets data-glass on <html>:
+     a — Chromium. SVG displacement piped into backdrop-filter → real
+         refraction of whatever sits behind the element.
+     b — Safari / Firefox. They support backdrop-filter but silently ignore
+         an SVG filter inside it, so this tier fakes depth with blur, a
+         saturation lift and a hand-tuned edge. Must look deliberate.
+     c — No backdrop-filter, or the user asked for reduced transparency.
+         Solid surface plus the rim. Still legible, still intentional.
+   =========================================================================== */
+
+.glass {
+  position: relative;
+  isolation: isolate;
+  border-radius: var(--r-lg);
+  background: rgba(18, 18, 22, 0.42);
+  box-shadow:
+    0 1px 0 0 rgba(237, 232, 224, 0.1) inset,
+    0 -1px 0 0 rgba(0, 0, 0, 0.5) inset,
+    0 16px 40px -20px rgba(0, 0, 0, 0.9);
+
+  /* Cursor position in element space, updated on rAF by useGlassLighting.
+     Parked off-element until a pointer actually arrives. */
+  --mx: 50%;
+  --my: -100%;
+}
+
+.glass--pill {
+  border-radius: var(--r-pill);
+}
+
+/* --- Tier A: true refraction (Chromium) ---------------------------------- */
+[data-glass='a'] .glass {
+  backdrop-filter: blur(3px) url('#lg-refract') saturate(1.7) brightness(1.06);
+  -webkit-backdrop-filter: blur(3px) saturate(1.7) brightness(1.06);
+}
+
+/* --- Tier B: honest fake (Safari / Firefox) ------------------------------ */
+[data-glass='b'] .glass {
+  backdrop-filter: blur(22px) saturate(1.8) brightness(1.08);
+  -webkit-backdrop-filter: blur(22px) saturate(1.8) brightness(1.08);
+  background: rgba(18, 18, 22, 0.34);
+}
+
+/* --- Tier C: solid ------------------------------------------------------- */
+[data-glass='c'] .glass {
+  background: var(--surface-02);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* --- Specular rim --------------------------------------------------------
+   A conic gradient so the highlight travels around the border the way light
+   wraps a real bevel, instead of sitting flat on one side. */
+.glass::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+  padding: 1px;
+  background: conic-gradient(
+    from 210deg at 50% 50%,
+    transparent 0deg,
+    var(--rim-dim) 40deg,
+    var(--rim) 90deg,
+    var(--rim-dim) 150deg,
+    transparent 200deg,
+    transparent 300deg,
+    var(--rim-dim) 340deg,
+    transparent 360deg
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+/* --- Cursor-tracked highlight -------------------------------------------
+   The surface catches light as the pointer moves. This is the single detail
+   that makes the material feel aware of the visitor. */
+.glass::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: inherit;
+  background: radial-gradient(
+    18rem 18rem at var(--mx) var(--my),
+    rgba(237, 232, 224, 0.11),
+    rgba(191, 212, 238, 0.05) 35%,
+    transparent 62%
+  );
+  opacity: 0;
+  transition: opacity var(--d-base) var(--e-out);
+  pointer-events: none;
+}
+
+.glass:hover::after,
+.glass:focus-within::after {
+  opacity: 1;
+}
+
+/* --- Chromatic dispersion -------------------------------------------------
+   Real glass splits light at its edges. Two hairline shadows offset in
+   opposite directions and tinted warm/cool read as dispersion without
+   costing a second backdrop pass. Tier A and B only — on C there is no
+   transmitted light to split. */
+[data-glass='a'] .glass,
+[data-glass='b'] .glass {
+  box-shadow:
+    0 1px 0 0 rgba(237, 232, 224, 0.1) inset,
+    0 -1px 0 0 rgba(0, 0, 0, 0.5) inset,
+    -0.5px 0 0.5px 0 rgba(120, 170, 255, 0.14) inset,
+    0.5px 0 0.5px 0 rgba(255, 176, 120, 0.1) inset,
+    0 16px 40px -20px rgba(0, 0, 0, 0.9);
+}
+
+/* --- Reduced motion / reduced transparency -------------------------------
+   Keep the rim and the material read; drop only the pointer tracking. */
+@media (prefers-reduced-motion: reduce) {
+  .glass::after {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .glass {
+    background: var(--surface-02);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}

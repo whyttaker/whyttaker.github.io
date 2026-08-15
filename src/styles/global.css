@@ -1,0 +1,239 @@
+@import './tokens.css';
+@import './materials.css';
+@import './glass.css';
+
+/* ===========================================================================
+   RESET
+   =========================================================================== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  /* Lenis drives scrolling on capable devices; native smooth would fight it. */
+  scroll-behavior: auto;
+}
+
+/* Anchor jumps still need to clear the floating nav when Lenis is off. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+:where(html) {
+  scroll-padding-top: 6rem;
+
+  /* Procedurally generated film grain. No image request. */
+  --grain-src: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='128' height='128'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='128' height='128' filter='url(%23n)' opacity='0.9'/%3E%3C/svg%3E");
+}
+
+body {
+  background: var(--void);
+  color: var(--bone-70);
+  font-family: var(--font-body);
+  font-size: var(--t-body);
+  line-height: var(--lh-body);
+  font-synthesis-weight: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100svh;
+  overflow-x: clip;
+}
+
+img,
+picture,
+video,
+canvas,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+/* ===========================================================================
+   FOCUS — ember is functional. This is one of only three places it appears.
+   =========================================================================== */
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 3px;
+  border-radius: var(--r-sm);
+}
+
+.skip-link {
+  position: absolute;
+  top: var(--s-4);
+  left: var(--s-4);
+  z-index: var(--z-modal);
+  padding: var(--s-3) var(--s-4);
+  background: var(--surface-03);
+  color: var(--bone);
+  border-radius: var(--r-sm);
+  font-family: var(--font-mono);
+  font-size: var(--t-mono);
+  letter-spacing: var(--ls-mono);
+  text-transform: uppercase;
+  transform: translateY(-200%);
+  transition: transform var(--d-base) var(--e-out);
+}
+
+.skip-link:focus-visible {
+  transform: translateY(0);
+}
+
+/* ===========================================================================
+   TYPOGRAPHY
+   Archivo's width axis does real work here: display sizes run semi-expanded
+   so caps read as engraved lettering, body-adjacent sizes run normal.
+   =========================================================================== */
+.t-display {
+  font-family: var(--font-display);
+  font-size: var(--t-display);
+  font-weight: 620;
+  font-variation-settings: 'wdth' 100;
+  line-height: var(--lh-tight);
+  letter-spacing: var(--ls-display);
+  color: var(--bone);
+  text-wrap: balance;
+}
+
+.t-h1 {
+  font-family: var(--font-display);
+  font-size: var(--t-h1);
+  font-weight: 600;
+  font-variation-settings: 'wdth' 104;
+  line-height: var(--lh-snug);
+  letter-spacing: var(--ls-h1);
+  color: var(--bone);
+  text-wrap: balance;
+}
+
+.t-h2 {
+  font-family: var(--font-display);
+  font-size: var(--t-h2);
+  font-weight: 600;
+  font-variation-settings: 'wdth' 104;
+  line-height: var(--lh-snug);
+  letter-spacing: var(--ls-h2);
+  color: var(--bone);
+  text-wrap: balance;
+}
+
+.t-h3 {
+  font-family: var(--font-display);
+  font-size: var(--t-h3);
+  font-weight: 580;
+  line-height: 1.3;
+  letter-spacing: var(--ls-h3);
+  color: var(--bone);
+}
+
+.t-lead {
+  font-size: var(--t-body-lg);
+  line-height: 1.55;
+  color: var(--bone-70);
+  max-width: var(--measure);
+  text-wrap: pretty;
+}
+
+.t-body {
+  font-size: var(--t-body);
+  color: var(--bone-70);
+  max-width: var(--measure);
+  text-wrap: pretty;
+}
+
+.t-meta {
+  font-size: var(--t-meta);
+  color: var(--bone-55);
+}
+
+/* The utility face. Every label, metric, date and technical aside. */
+.t-mono {
+  font-family: var(--font-mono);
+  font-size: var(--t-mono);
+  font-weight: 500;
+  letter-spacing: var(--ls-mono);
+  text-transform: uppercase;
+  color: var(--bone-55);
+}
+
+/* ===========================================================================
+   LAYOUT
+   =========================================================================== */
+.shell {
+  width: 100%;
+  max-width: var(--max-w);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+.section {
+  position: relative;
+  z-index: var(--z-content);
+  padding-block: var(--sp-section);
+}
+
+/* Section heads are a structural device that encodes something true: the
+   mono label names the kind of content, the rule measures the page. */
+.section-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-6);
+  margin-bottom: var(--s-16);
+}
+
+.section-head__rule {
+  flex: 1;
+  height: 1px;
+  background: var(--bone-08);
+}
+
+.stack-flow > * + * {
+  margin-top: var(--s-4);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}

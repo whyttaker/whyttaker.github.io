@@ -1,0 +1,69 @@
+---
+title: Quantum Leap
+discipline: Game Systems
+context: UC Irvine — Game Development
+tagline: Puzzle platformer with time manipulation — Unreal Engine & C++
+thesis: A puzzle platformer where you cooperate with recorded past versions of yourself, built on a deterministic replay system.
+outcome: Multiple player timelines coexisting in one simulation
+role: Gameplay & Systems Engineer
+cover: ../../assets/projects/quantum-leap.png
+coverAlt: Key art for Quantum Leap
+stack:
+  - Unreal Engine
+  - C++
+  - Blueprints
+  - Event Systems
+systems:
+  - Deterministic Replay
+  - Time-Based Simulation
+  - Physics Interaction
+  - Event-Driven Puzzles
+tags:
+  - Unreal Engine
+  - C++
+  - Replay Systems
+  - Event-Driven
+order: 2
+---
+
+<section data-block="overview">
+<span class="t-mono">Overview</span>
+## About the Project
+
+Quantum Leap is a puzzle platformer built around a time manipulation mechanic that allows players to interact with past versions of themselves to solve puzzles. The project explores deterministic replay systems that enable multiple timelines of player actions to coexist and interact within the same environment.
+</section>
+
+<section data-block="process">
+<span class="t-mono">Design Process</span>
+## Design & Iteration
+
+The game was designed around cooperative problem solving across time. Early levels introduce the time manipulation mechanic through simple puzzles before combining it with environmental interactions such as switches, platforms, and timing-based triggers. This progression allowed players to understand the mechanic before encountering more complex multi-step puzzles.
+</section>
+
+<section data-block="implementation">
+<span class="t-mono">Implementation</span>
+## Technical Architecture
+
+The core system records player inputs and interactions over time and replays them as ghost entities in future iterations. Player movement, input states, and object interactions are captured in time-indexed structures and reconstructed during replay sequences. The system allows the current player to interact with previously recorded actions, enabling puzzles that require coordination across multiple timelines.
+</section>
+
+<section data-block="algorithms">
+<span class="t-mono">Algorithms & Data Structures</span>
+## Systems Design
+
+The replay system stores time-indexed player states in sequential data structures that allow deterministic reconstruction of past actions. Event-driven architecture is used to trigger puzzle interactions and environmental state changes. Fixed update intervals are used to maintain synchronization between recorded player actions and world simulation.
+</section>
+
+<section data-block="challenges">
+<span class="t-mono">Key Engineering Challenges</span>
+## What Was Hard
+
+Ensuring deterministic replay across multiple timelines was the primary challenge. Physics interactions and environmental triggers needed to behave consistently across replay cycles so that puzzle outcomes remained predictable. Managing interactions between multiple versions of the player also required careful control of collision detection and event ordering.
+</section>
+
+<section data-block="takeaways">
+<span class="t-mono">Takeaways</span>
+## What I Learned
+
+This project helped me develop systems centered around a single core mechanic while managing complex state across time-based simulations. I gained experience designing deterministic replay systems, implementing event-driven puzzle interactions, and structuring gameplay architecture to support scalable mechanics.
+</section>

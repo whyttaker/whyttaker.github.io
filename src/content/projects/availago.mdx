@@ -1,0 +1,78 @@
+---
+title: Availago
+discipline: Product
+context: Personal — Full-Stack Platform
+tagline: Scheduling & social coordination platform — Python & REST APIs
+thesis: A scheduling platform that aggregates calendars across a group and computes where everyone is actually free.
+outcome: Interval-intersection engine that scales with group size
+role: Solo — Design & Engineering
+cover: ../../assets/projects/availago.png
+coverAlt: Key art for Availago
+stack:
+  - Python
+  - REST APIs
+  - Google Calendar API
+  - iCal
+  - Database Systems
+systems:
+  - Calendar Aggregation
+  - Interval Scheduling
+  - Group Availability
+  - Cloud Infrastructure
+tags:
+  - Python
+  - REST APIs
+  - Google Calendar
+  - Cloud
+order: 4
+---
+
+<section data-block="overview">
+<span class="t-mono">Overview</span>
+## About the Project
+
+Availago is a scheduling and social coordination platform designed to help groups easily find times to meet. The application allows users to import existing calendars or create schedules within the app, then form groups with friends to identify overlapping availability. The long-term vision for the platform includes integrating with local businesses to suggest activities and automatically book events once a group agrees on a time.
+</section>
+
+<section data-block="process">
+<span class="t-mono">Design Process</span>
+## Design & Vision
+
+The design focused on simplifying the process of coordinating schedules across multiple people, which often requires manual back-and-forth communication. Early design iterations prioritized a clear workflow where users can quickly sync calendars, create groups, and view shared availability. The interface was structured around visualizing overlapping time windows so that groups can immediately identify viable meeting times.
+
+The long-term product vision expands beyond scheduling by introducing location-based recommendations and automated bookings, turning the app into a platform that connects social planning with local businesses.
+</section>
+
+<section data-block="implementation">
+<span class="t-mono">Implementation</span>
+## Technical Architecture
+
+The system is designed around a backend service that aggregates calendar data and computes shared availability across multiple users. Calendar events are imported and normalized into a unified internal format so that availability can be calculated consistently regardless of the source.
+
+Group scheduling works by combining the individual availability of each user and computing overlapping time windows where all members are free. These results are surfaced in the interface as suggested meeting times that the group can vote on or confirm. Future iterations will incorporate integrations with local business APIs, allowing the platform to recommend activities or automatically book reservations once a time slot is selected.
+</section>
+
+<section data-block="algorithms">
+<span class="t-mono">Algorithms & Data Structures</span>
+## Scheduling Engine
+
+The scheduling engine relies on interval comparison algorithms to determine overlapping availability across multiple users. Calendar events are represented as time intervals that are merged and compared using interval intersection techniques. Efficient data structures are used to process these intervals so the system can quickly compute shared free time even as group size grows.
+
+As the platform expands, recommendation systems and ranking algorithms will be used to suggest venues or activities based on location, group preferences, and availability.
+</section>
+
+<section data-block="challenges">
+<span class="t-mono">Key Engineering Challenges</span>
+## What Was Hard
+
+One of the main challenges is aggregating calendar data from multiple sources while maintaining a consistent representation of events and availability. Differences in calendar formats and time zones require careful normalization to ensure accurate scheduling results.
+
+Another challenge is efficiently computing overlapping availability as group sizes increase. The scheduling engine must remain performant while processing many time intervals across multiple users. Future development will also involve building reliable integrations with external business APIs and designing a booking workflow that ensures availability is confirmed before reservations are made.
+</section>
+
+<section data-block="takeaways">
+<span class="t-mono">Takeaways</span>
+## What I Learned
+
+Working on Availago has helped me think about product design from both a technical and user-experience perspective. I gained experience designing systems that aggregate data from multiple sources and compute meaningful results for users. The project also reinforced the importance of building scalable backend logic that can support additional platform features such as recommendations and automated bookings.
+</section>

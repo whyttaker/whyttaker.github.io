@@ -1,0 +1,205 @@
+---
+import SectionHead from './SectionHead.astro';
+import CopyEmail from '../react/CopyEmail';
+import { site, links } from '../../data/site';
+---
+
+<section class="section contact" id="contact" aria-labelledby="contact-label">
+  <div class="shell">
+    <SectionHead label="Contact" id="contact-label" />
+
+    <div class="contact__grid">
+      <div>
+        <h2 class="contact__lede t-h1">
+          Open to conversations about systems, scale, and the products built on
+          top of them.
+        </h2>
+
+        <div class="contact__actions">
+          <CopyEmail client:visible email={site.email} />
+        </div>
+      </div>
+
+      <dl class="contact__details">
+        <div class="contact__detail">
+          <dt class="t-mono">Elsewhere</dt>
+          <dd>
+            <ul class="contact__links">
+              {
+                links.map((l) => (
+                  <li>
+                    <a
+                      class="contact__link"
+                      href={l.href}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                    >
+                      {l.label}
+                      <span class="contact__arrow" aria-hidden="true">
+                        &#8599;
+                      </span>
+                    </a>
+                  </li>
+                ))
+              }
+            </ul>
+          </dd>
+        </div>
+
+        <div class="contact__detail">
+          <dt class="t-mono">Resume</dt>
+          <dd>
+            <a class="contact__link" href={site.resumePdf} download>
+              Download PDF
+              <span class="contact__arrow" aria-hidden="true">&#8595;</span>
+            </a>
+          </dd>
+        </div>
+
+        <div class="contact__detail">
+          <dt class="t-mono">Based in</dt>
+          <dd class="contact__plain">{site.location}</dd>
+        </div>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<style>
+  .contact__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.7fr);
+    gap: clamp(2.5rem, 6vw, 6rem);
+    align-items: start;
+  }
+
+  .contact__lede {
+    max-width: 20ch;
+    margin-bottom: var(--s-12);
+  }
+
+  /* --- Copy control ------------------------------------------------------
+     Styles live here rather than in the island so the button is correct on
+     first paint, before React hydrates. */
+  .contact__actions :global(.copy) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--s-4);
+  }
+
+  .contact__actions :global(.copy__btn) {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--s-4);
+    padding: 0.9rem 1.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    letter-spacing: 0.02em;
+    color: var(--bone);
+    transition:
+      transform var(--d-fast) var(--e-snap),
+      box-shadow var(--d-base) var(--e-out);
+  }
+
+  /* Compression on press. Small, immediate, and the whole point. */
+  .contact__actions :global(.copy__btn:active) {
+    transform: scale(0.975);
+  }
+
+  .contact__actions :global(.copy__btn[data-state='copied']) {
+    box-shadow:
+      0 1px 0 0 rgba(237, 232, 224, 0.1) inset,
+      0 0 0 1px var(--ember),
+      0 0 24px -6px var(--ember-dim);
+  }
+
+  .contact__actions :global(.copy__label) {
+    animation: label-in var(--d-base) var(--e-out);
+  }
+
+  @keyframes label-in {
+    from {
+      opacity: 0;
+      transform: translateY(0.4em);
+      clip-path: inset(0 0 100% 0);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+      clip-path: inset(0 0 0 0);
+    }
+  }
+
+  .contact__actions :global(.copy__icon) {
+    color: var(--bone-55);
+  }
+
+  .contact__actions :global(.copy__btn[data-state='copied'] .copy__icon) {
+    color: var(--ember);
+  }
+
+  .contact__actions :global(.copy__fallback) {
+    color: var(--bone-22);
+    transition: color var(--d-base) var(--e-out);
+  }
+
+  .contact__actions :global(.copy__fallback:hover) {
+    color: var(--bone-55);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .contact__actions :global(.copy__label) {
+      animation: none;
+    }
+  }
+
+  /* --- Details ------------------------------------------------------------ */
+  .contact__details {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-8);
+  }
+
+  .contact__detail dt {
+    margin-bottom: var(--s-3);
+    color: var(--bone-22);
+  }
+
+  .contact__links {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-2);
+  }
+
+  .contact__link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--bone-70);
+    transition: color var(--d-base) var(--e-out);
+  }
+
+  .contact__link:hover {
+    color: var(--bone);
+  }
+
+  .contact__arrow {
+    color: var(--bone-22);
+    transition: transform var(--d-base) var(--e-out);
+  }
+
+  .contact__link:hover .contact__arrow {
+    transform: translate(0.15rem, -0.15rem);
+  }
+
+  .contact__plain {
+    color: var(--bone-70);
+  }
+
+  @media (max-width: 60rem) {
+    .contact__grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

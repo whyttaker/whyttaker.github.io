@@ -1,0 +1,89 @@
+---
+import '@fontsource-variable/archivo/wdth.css';
+import '@fontsource-variable/inter/wght.css';
+import '@fontsource/jetbrains-mono/400.css';
+import '@fontsource/jetbrains-mono/500.css';
+import '../styles/global.css';
+
+import GlassFilter from '../components/astro/GlassFilter.astro';
+import SiteFooter from '../components/astro/SiteFooter.astro';
+import { site } from '../data/site';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const { title, description = site.description } = Astro.props;
+const pageTitle = title ? `${title} — ${site.name}` : `${site.name} — ${site.role}`;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta name="theme-color" content="#000000" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    {/* Glass capability probe. Runs before first paint so a tier is always
+        resolved and glass never flashes between materials.
+
+        Chromium is the only engine that honours an SVG filter inside
+        backdrop-filter, and there is no feature query for that specific
+        combination — CSS.supports() returns true in Safari and Firefox even
+        though they silently drop the filter. So tier A is gated on a
+        Chromium signal, and everything else falls to the hand-tuned B. */}
+    <script is:inline>
+      (function () {
+        var el = document.documentElement;
+        var hasBackdrop =
+          CSS.supports('backdrop-filter', 'blur(1px)') ||
+          CSS.supports('-webkit-backdrop-filter', 'blur(1px)');
+        var reducedTransparency =
+          window.matchMedia('(prefers-reduced-transparency: reduce)').matches;
+
+        if (!hasBackdrop || reducedTransparency) {
+          el.dataset.glass = 'c';
+          return;
+        }
+
+        var ua = navigator.userAgentData;
+        var isChromium = ua
+          ? ua.brands.some(function (b) {
+              return b.brand === 'Chromium';
+            })
+          : /Chrome|Chromium|Edg/.test(navigator.userAgent) &&
+            !/OPR|SamsungBrowser/.test(navigator.userAgent);
+
+        el.dataset.glass = isChromium ? 'a' : 'b';
+      })();
+    </script>
+  </head>
+
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <div class="grain" aria-hidden="true"></div>
+    <div class="vignette" aria-hidden="true"></div>
+    <GlassFilter />
+
+    <slot name="nav" />
+
+    <main id="main">
+      <slot />
+    </main>
+
+    <SiteFooter />
+  </body>
+</html>

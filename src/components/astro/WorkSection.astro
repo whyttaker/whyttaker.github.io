@@ -1,0 +1,238 @@
+---
+import { Image } from 'astro:assets';
+import { getCollection } from 'astro:content';
+import SectionHead from './SectionHead.astro';
+
+const projects = (await getCollection('projects')).sort(
+  (a, b) => a.data.order - b.data.order
+);
+---
+
+<section class="section" id="work" aria-labelledby="work-label">
+  <div class="shell">
+    <SectionHead label="Selected Work" id="work-label" count={`${projects.length} projects`} />
+
+    <ol class="work" data-work-list>
+      {
+        projects.map((p) => (
+          <li class="work__row" data-work-row={p.id}>
+            <a class="work__link" href={`/work/${p.id}/`}>
+              <div class="work__media">
+                <Image
+                  src={p.data.cover}
+                  alt={p.data.coverAlt}
+                  widths={[480, 768, 1100]}
+                  sizes="(min-width: 60rem) 46vw, 92vw"
+                  loading="lazy"
+                  decoding="async"
+                  class="work__img"
+                />
+                <span class="work__sheen" aria-hidden="true" />
+              </div>
+
+              <div class="work__body">
+                <p class="work__eyebrow t-mono">
+                  <span class="work__discipline">{p.data.discipline}</span>
+                  <span class="work__slash" aria-hidden="true">
+                    /
+                  </span>
+                  <span>{p.data.context}</span>
+                </p>
+
+                <h3 class="work__title t-h2">{p.data.title}</h3>
+                <p class="work__thesis t-lead">{p.data.thesis}</p>
+
+                <dl class="work__facts">
+                  <div class="work__fact">
+                    <dt class="t-mono">Role</dt>
+                    <dd>{p.data.role}</dd>
+                  </div>
+                  <div class="work__fact">
+                    <dt class="t-mono">Outcome</dt>
+                    <dd class="work__outcome">{p.data.outcome}</dd>
+                  </div>
+                </dl>
+
+                <ul class="work__stack">
+                  {p.data.tags.map((t) => (
+                    <li class="chip t-mono">{t}</li>
+                  ))}
+                </ul>
+
+                <span class="work__cta t-mono">
+                  Read case study
+                  <span class="work__arrow" aria-hidden="true">
+                    &#8594;
+                  </span>
+                </span>
+              </div>
+            </a>
+          </li>
+        ))
+      }
+    </ol>
+  </div>
+</section>
+
+<style>
+  .work {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(4rem, 9vw, 9rem);
+  }
+
+  .work__link {
+    display: grid;
+    grid-template-columns: 1.05fr 1fr;
+    align-items: center;
+    gap: clamp(2rem, 5vw, 5rem);
+  }
+
+  /* Alternate the reading direction so the page has a rhythm instead of a
+     column. Only on wide screens — stacked layouts always lead with media. */
+  @media (min-width: 60rem) {
+    .work__row:nth-child(even) .work__link {
+      grid-template-columns: 1fr 1.05fr;
+    }
+
+    .work__row:nth-child(even) .work__media {
+      order: 2;
+    }
+  }
+
+  /* --- Media ------------------------------------------------------------ */
+  .work__media {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--r-md);
+    background: var(--surface-01);
+    box-shadow:
+      var(--shadow-inset),
+      var(--shadow-ambient);
+    aspect-ratio: 4 / 3;
+  }
+
+  .work__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* Images start slightly desaturated and dim so the page reads as one dark
+       composition; hover restores them. Colour is earned, not given. */
+    filter: saturate(0.72) brightness(0.78) contrast(1.04);
+    transform: scale(1.02);
+    transition:
+      filter var(--d-slow) var(--e-out),
+      transform var(--d-slow) var(--e-out);
+  }
+
+  .work__sheen {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to top,
+      rgba(0, 0, 0, 0.55),
+      transparent 45%
+    );
+    pointer-events: none;
+  }
+
+  .work__link:hover .work__img,
+  .work__link:focus-visible .work__img {
+    filter: saturate(1) brightness(0.95) contrast(1);
+    transform: scale(1.045);
+  }
+
+  /* --- Body ------------------------------------------------------------- */
+  .work__eyebrow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: var(--s-4);
+  }
+
+  .work__discipline {
+    color: var(--bone);
+  }
+
+  .work__slash {
+    color: var(--bone-22);
+  }
+
+  .work__title {
+    margin-bottom: var(--s-3);
+  }
+
+  .work__thesis {
+    margin-bottom: var(--s-6);
+  }
+
+  .work__facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s-8);
+    margin-bottom: var(--s-6);
+    padding-block: var(--s-4);
+    border-block: 1px solid var(--bone-08);
+  }
+
+  .work__fact dt {
+    margin-bottom: 0.35rem;
+    color: var(--bone-22);
+  }
+
+  .work__fact dd {
+    font-size: var(--t-meta);
+    color: var(--bone-70);
+  }
+
+  .work__outcome {
+    color: var(--bone);
+  }
+
+  .work__stack {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s-2);
+    margin-bottom: var(--s-6);
+  }
+
+  .chip {
+    padding: 0.3rem 0.6rem;
+    border: 1px solid var(--bone-08);
+    border-radius: var(--r-sm);
+    background: var(--surface-01);
+    color: var(--bone-55);
+    font-size: 0.6875rem;
+    letter-spacing: 0.06em;
+  }
+
+  .work__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--bone);
+  }
+
+  .work__arrow {
+    display: inline-block;
+    transition: transform var(--d-base) var(--e-out);
+  }
+
+  .work__link:hover .work__arrow,
+  .work__link:focus-visible .work__arrow {
+    transform: translateX(0.35rem);
+  }
+
+  /* --- Responsive ------------------------------------------------------- */
+  @media (max-width: 60rem) {
+    .work__link {
+      grid-template-columns: 1fr;
+      gap: var(--s-6);
+    }
+
+    .work__media {
+      aspect-ratio: 16 / 10;
+    }
+  }
+</style>

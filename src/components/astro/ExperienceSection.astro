@@ -1,0 +1,244 @@
+---
+import SectionHead from './SectionHead.astro';
+import { experience } from '../../data/experience';
+
+/*
+  Ordering is real information here — this is a chronology — so the timeline
+  rail and the year markers earn their place, unlike index numbers on the
+  work rows.
+
+  Structurally this is a plain ordered list of roles. Every bullet is visible
+  at rest with no interaction required; the old site hid them behind a click
+  ("EXPAND ↗") which is exactly wrong for the one section recruiters read.
+  Depth is layered on top as decoration and can be removed without cost.
+*/
+---
+
+<section class="section" id="experience" aria-labelledby="exp-label">
+  <div class="shell">
+    <SectionHead label="Experience" id="exp-label" count="3 roles" />
+
+    <ol class="exp">
+      {
+        experience.map((role) => (
+          <li class="exp__role">
+            <div class="exp__rail" aria-hidden="true">
+              <span class="exp__node" />
+              <span class="exp__year t-mono">{role.start}</span>
+            </div>
+
+            <div class="exp__content">
+              <header class="exp__header matte">
+                <div class="exp__ident">
+                  <span class="t-mono exp__kind" data-current={role.kind === 'Current'}>
+                    {role.kind}
+                  </span>
+                  <h3 class="exp__org t-h2">{role.org}</h3>
+                  <p class="exp__title">{role.role}</p>
+                </div>
+                <div class="exp__where t-mono">
+                  <span>{role.location}</span>
+                  <span class="exp__dot" aria-hidden="true">
+                    ·
+                  </span>
+                  <span>{role.period}</span>
+                </div>
+              </header>
+
+              {role.teams.map((team) => (
+                <div class="exp__team matte">
+                  {team.name && <p class="exp__team-name t-mono">{team.name}</p>}
+                  <ul class="exp__bullets">
+                    {team.bullets.map((b) => (
+                      <li>{b}</li>
+                    ))}
+                  </ul>
+                  <ul class="exp__tags">
+                    {team.tags.map((t) => (
+                      <li class="chip t-mono">{t}</li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </li>
+        ))
+      }
+    </ol>
+  </div>
+</section>
+
+<style>
+  .exp {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-16);
+    /* Panels track the text measure. Full-bleed slabs with a 74ch column
+       inside them leave a dead half-panel on the right. */
+    max-width: 72rem;
+  }
+
+  .exp__role {
+    display: grid;
+    grid-template-columns: 5rem 1fr;
+    gap: var(--s-6);
+  }
+
+  /* --- Rail ------------------------------------------------------------- */
+  .exp__rail {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--s-3);
+    padding-top: 1.6rem;
+  }
+
+  .exp__rail::after {
+    content: '';
+    position: absolute;
+    top: 2.6rem;
+    bottom: -4rem;
+    width: 1px;
+    background: linear-gradient(to bottom, var(--bone-08), transparent);
+  }
+
+  .exp__role:last-child .exp__rail::after {
+    display: none;
+  }
+
+  .exp__node {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--surface-03);
+    box-shadow:
+      0 0 0 1px var(--bone-22),
+      0 0 12px rgba(191, 212, 238, 0.25);
+  }
+
+  .exp__year {
+    color: var(--bone-55);
+    writing-mode: vertical-rl;
+    letter-spacing: 0.18em;
+  }
+
+  /* --- Content ---------------------------------------------------------- */
+  .exp__content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-3);
+    min-width: 0;
+  }
+
+  .exp__header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--s-4);
+    padding: var(--s-6);
+  }
+
+  .exp__kind {
+    display: inline-block;
+    margin-bottom: var(--s-3);
+    color: var(--bone-22);
+  }
+
+  /* The single active role is the only place ember appears in this section. */
+  .exp__kind[data-current='true'] {
+    color: var(--ember);
+  }
+
+  .exp__title {
+    margin-top: 0.35rem;
+    color: var(--bone-70);
+  }
+
+  .exp__where {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--bone-55);
+  }
+
+  .exp__dot {
+    color: var(--bone-22);
+  }
+
+  .exp__team {
+    padding: var(--s-6);
+  }
+
+  .exp__team-name {
+    margin-bottom: var(--s-4);
+    color: var(--bone);
+    text-transform: none;
+    letter-spacing: 0.03em;
+    font-size: var(--t-meta);
+  }
+
+  .exp__bullets {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-3);
+    max-width: 74ch;
+  }
+
+  .exp__bullets li {
+    position: relative;
+    padding-left: var(--s-6);
+    font-size: var(--t-meta);
+    line-height: 1.62;
+    color: var(--bone-70);
+    text-wrap: pretty;
+  }
+
+  /* A hairline tick rather than a bullet glyph — quieter, and it lines the
+     left edge of the list up into a visible column. */
+  .exp__bullets li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.72em;
+    width: 0.75rem;
+    height: 1px;
+    background: var(--bone-22);
+  }
+
+  .exp__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s-2);
+    margin-top: var(--s-6);
+  }
+
+  .chip {
+    padding: 0.3rem 0.6rem;
+    border: 1px solid var(--bone-08);
+    border-radius: var(--r-sm);
+    background: var(--surface-00);
+    color: var(--bone-55);
+    font-size: 0.6875rem;
+    letter-spacing: 0.06em;
+  }
+
+  /* --- Responsive ------------------------------------------------------- */
+  @media (max-width: 48rem) {
+    .exp__role {
+      grid-template-columns: 1.75rem 1fr;
+      gap: var(--s-4);
+    }
+
+    .exp__year {
+      writing-mode: horizontal-tb;
+      font-size: 0.625rem;
+    }
+
+    .exp__header,
+    .exp__team {
+      padding: var(--s-4);
+    }
+  }
+</style>

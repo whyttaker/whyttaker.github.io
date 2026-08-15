@@ -1,0 +1,151 @@
+---
+import SectionHead from './SectionHead.astro';
+import { stack } from '../../data/stack';
+
+const total = stack.reduce((n, s) => n + s.items.length, 0);
+---
+
+<section class="section" id="stack" aria-labelledby="stack-label">
+  <div class="shell">
+    <SectionHead label="Stack" id="stack-label" count={`${total} entries`} />
+
+    <p class="stack__hint t-meta">
+      Hover any entry to see what it connects to. Related tools rise, unrelated
+      ones recede.
+    </p>
+
+    <div class="stack" data-stack-field>
+      {
+        stack.map((section) => (
+          <div class="stack__section">
+            <h3 class="stack__title t-mono">{section.title}</h3>
+            <ul class="stack__items">
+              {section.items.map((item) => (
+                <li
+                  class="stack__item"
+                  data-stack-item
+                  data-groups={item.groups.join(' ')}
+                  tabindex="0"
+                >
+                  <span class="stack__name">{item.name}</span>
+                  <span class="stack__sub t-mono">{item.sub}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .stack__hint {
+    margin-top: calc(var(--s-16) * -1 + var(--s-6));
+    margin-bottom: var(--s-12);
+    color: var(--bone-22);
+  }
+
+  .stack {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-12);
+  }
+
+  .stack__title {
+    margin-bottom: var(--s-4);
+    color: var(--bone-22);
+  }
+
+  .stack__items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s-2);
+  }
+
+  /* Entries are engraved into a matte field rather than floating as 47
+     individual glass cards, which is what the old site did. The label sits
+     below the surface; only the group highlight lifts it out. */
+  .stack__item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    padding: 0.6rem 0.85rem;
+    border-radius: var(--r-sm);
+    background: var(--surface-00);
+    box-shadow:
+      0 -1px 0 rgba(0, 0, 0, 0.9) inset,
+      0 1px 0 rgba(237, 232, 224, 0.045);
+    cursor: default;
+    transition:
+      transform var(--d-base) var(--e-out),
+      opacity var(--d-base) var(--e-out),
+      filter var(--d-base) var(--e-out),
+      background var(--d-base) var(--e-out),
+      box-shadow var(--d-base) var(--e-out);
+  }
+
+  .stack__name {
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: var(--bone-70);
+    text-shadow:
+      0 -1px 0 rgba(0, 0, 0, 0.9),
+      0 1px 0 rgba(237, 232, 224, 0.06);
+  }
+
+  .stack__sub {
+    font-size: 0.625rem;
+    color: var(--bone-22);
+  }
+
+  /* --- Relatedness states ------------------------------------------------
+     Set by StackField.tsx. Depth does the talking: the hovered entry rises
+     out of the surface, its relatives lift slightly, everything else sinks
+     and blurs. */
+  .stack__item[data-state='active'] {
+    background: var(--surface-03);
+    transform: translateY(-3px) scale(1.02);
+    box-shadow:
+      0 1px 0 rgba(237, 232, 224, 0.14) inset,
+      0 0 0 1px var(--rim-dim),
+      0 12px 24px -12px #000;
+  }
+
+  .stack__item[data-state='active'] .stack__name {
+    color: var(--bone);
+    text-shadow: none;
+  }
+
+  .stack__item[data-state='related'] {
+    background: var(--surface-02);
+    transform: translateY(-1px);
+  }
+
+  .stack__item[data-state='related'] .stack__name {
+    color: var(--bone-70);
+    text-shadow: none;
+  }
+
+  .stack__item[data-state='muted'] {
+    opacity: 0.34;
+    filter: blur(0.6px);
+    transform: translateY(1px) scale(0.99);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .stack__item {
+      transition-duration: var(--d-base);
+    }
+
+    .stack__item[data-state='active'],
+    .stack__item[data-state='related'],
+    .stack__item[data-state='muted'] {
+      transform: none;
+    }
+
+    .stack__item[data-state='muted'] {
+      filter: none;
+    }
+  }
+</style>
