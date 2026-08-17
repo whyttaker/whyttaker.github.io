@@ -1,72 +1,45 @@
 ---
-import { site, strata } from '../../data/site';
-import StrataCanvas from '../react/StrataCanvas';
-
-const plateSpecs = strata.map((s) => ({
-  id: s.id,
-  label: s.label,
-  metric: s.metric,
-}));
+import { site } from '../../data/site';
 
 /*
-  The hero is built in two layers that are deliberately independent:
+  The hero is a canvas of falling glyphs (see scripts/rain/) plus real DOM text
+  in front of it.
 
-  1. A CSS strata composition — six plates fanned in perspective. This is the
-     baseline. It ships with the HTML, needs no JavaScript, and is what a
-     reduced-motion or no-JS visitor sees. It is composed to look finished on
-     its own rather than like a placeholder.
+  The canvas is decorative and aria-hidden. Name, role and school are ordinary
+  HTML above it, so the visual can fail completely — no JS, no canvas support,
+  a thrown exception — and the hero still says who this is. That constraint is
+  why there is no loading state and no layout reserved for anything to arrive.
 
-  2. A WebGL canvas that mounts on top and takes over once it is ready
-     (StrataCanvas, hydrated client:idle so it never competes with first paint).
-     It fades in over the CSS layer, so nothing pops.
-
-  The name and role are real DOM text in front of both layers — never geometry,
-  never canvas-rendered. The visual can fail completely and the hero still
-  reads.
+  A no-JS visitor gets the composition below with a plain black field behind
+  it, which is a legitimate design rather than a broken one.
 */
 ---
 
 <section class="hero" id="hero">
-  <div class="hero__stage" aria-hidden="true">
-    <div class="hero__plates" data-strata-css>
-      {
-        strata.map((plate, i) => (
-          <div class="plate" data-plate={plate.id} style={`--i:${i}`}>
-            <span class="plate__etch">
-              <span class="plate__label">{plate.label}</span>
-              <span class="plate__rule"></span>
-              <span class="plate__metric">{plate.metric}</span>
-            </span>
-          </div>
-        ))
-      }
-    </div>
-    <div class="hero__canvas-mount" data-strata-canvas>
-      <StrataCanvas client:idle plates={plateSpecs} />
-    </div>
-  </div>
+  <canvas class="rain" data-rain aria-hidden="true"></canvas>
 
   <div class="shell hero__content">
-    <p class="hero__eyebrow t-mono">
-      {site.role} <span class="hero__dot">·</span>
-      {site.company}
-    </p>
+    {/* The rain dims behind this block so the display type stays crisp. */}
+    <div class="hero__type" data-rain-clear>
+      <p class="hero__eyebrow t-mono">
+        {site.role} <span class="hero__dot">·</span>
+        {site.company}
+      </p>
 
-    <h1 class="hero__name t-display">
-      <span class="hero__name-line">Whittaker</span>
-      <span class="hero__name-line">Worland</span>
-    </h1>
+      <h1 class="hero__name t-display">
+        <span class="hero__name-line">Whittaker</span>
+        <span class="hero__name-line">Worland</span>
+      </h1>
 
-    <p class="hero__sub">
-      {site.education}<br />
-      <span class="hero__school">{site.school}</span>
-    </p>
+      <p class="hero__sub">
+        {site.education}<br />
+        <span class="hero__school">{site.school}</span>
+      </p>
+    </div>
 
-    <p class="hero__hint t-mono" data-hero-hint>Drag to separate</p>
+    <p class="hero__hint t-mono" data-hero-hint>Move to decode</p>
   </div>
 
-  {/* Deliberately not labelled "Selected work" — it sits directly above the
-      Selected Work section head, and the repetition read as a duplicate. */}
   <a class="hero__scroll t-mono" href="#work">
     <span class="hero__scroll-rule" aria-hidden="true"></span>
     <span>Scroll</span>
@@ -83,139 +56,43 @@ const plateSpecs = strata.map((s) => ({
     overflow: clip;
   }
 
-  /* --- Stage ------------------------------------------------------------ */
-  .hero__stage {
+  /* Sits below the global grain layer (z-index 1) so the film grain textures
+     the rain rather than being hidden by it. */
+  .rain {
     position: absolute;
     inset: 0;
-    z-index: 1;
-    display: grid;
-    place-items: center;
-    pointer-events: none;
-  }
-
-  .hero__canvas-mount {
-    position: absolute;
-    inset: 0;
-    /* Reserved box — the canvas never causes layout shift when it arrives. */
-    pointer-events: auto;
-  }
-
-  /* The canvas fades up over the CSS baseline instead of replacing it, so
-     nothing pops when three.js finishes initialising. */
-  .hero__canvas-mount :global(.strata) {
-    position: absolute;
-    inset: 0;
+    z-index: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
     opacity: 0;
-    transition: opacity 700ms var(--e-out);
+    transition: opacity 900ms var(--e-out);
   }
 
-  /* Two opacities multiply here: the one-time fade-in when three.js is ready,
-     and --handoff, which the scroll store drives to 0 as the object hands the
-     page over to the work section. */
-  .hero__canvas-mount :global(.strata[data-ready]) {
+  .rain[data-ready] {
+    /* --handoff is driven by the scroll store as the hero leaves. */
     opacity: var(--handoff, 1);
   }
 
-  /* --- CSS strata -------------------------------------------------------
-     Six plates spread like a dealt hand. The fan runs lower-left to
-     upper-right so it sits diagonally against the left-aligned name rather
-     than symmetrically behind it. */
-  .hero__plates {
-    position: relative;
-    width: min(46rem, 82vw);
-    /* Thin sheets, not panels. Strata are layers — a tall plate reads as a
-       card, and six stacked cards is just a deck. */
-    aspect-ratio: 16 / 7;
-    perspective: 1400px;
-    perspective-origin: 60% 45%;
-    transform: translate3d(16%, 2%, 0) rotate(-3deg);
-    transition: opacity var(--d-slow) var(--e-out);
+  /* --- Intro -------------------------------------------------------------
+     During the storm the hero content is held back rather than removed. It
+     stays in the layout and stays painted — hiding it outright would delay the
+     largest contentful paint until the animation finished, and would mean a
+     failed script leaves nothing on screen. The rain spells the name out of
+     itself, then this rises to meet it. */
+  :global(html[data-intro]) .hero__content,
+  :global(html[data-intro]) .hero__scroll {
+    opacity: 0.04;
+    transform: translateY(0.6rem);
   }
 
-  .plate {
-    position: absolute;
-    inset: 30% 8%;
-    padding: 0.8rem 1.15rem;
-    border-radius: var(--r-md);
-    /* Etch hugs the trailing edge so the display type can sit in front of the
-       sheets — which is the point — without covering any of the lettering. */
-    display: flex;
-    align-items: flex-start;
-    justify-content: flex-end;
-
-    /* The plate body: a very slightly luminous sheet, brighter along the
-       leading edge where light would enter the glass. */
-    background: linear-gradient(
-      135deg,
-      rgba(191, 212, 238, 0.055),
-      rgba(191, 212, 238, 0.012) 38%,
-      rgba(0, 0, 0, 0) 70%
-    );
-    border: 1px solid rgba(191, 212, 238, 0.14);
-    box-shadow:
-      0 1px 0 rgba(237, 232, 224, 0.09) inset,
-      0 30px 60px -40px #000;
-
-    /* Vertical step is tuned against the etch line-height: each plate must
-       clear the one in front by more than a full line, or the labels collide
-       into an unreadable clump. */
-    transform: translate3d(
-        calc(var(--i) * 2.6%),
-        calc(var(--i) * -19%),
-        calc(var(--i) * -68px)
-      )
-      rotateX(11deg) rotateY(-19deg) rotateZ(1.5deg);
-
-    /* Depth cue: further plates sit dimmer, exactly like real stacked glass. */
-    opacity: calc(1 - (var(--i) * 0.115));
-  }
-
-  /* A specular streak across each sheet. Angled against the plate rotation so
-     it reads as a reflection rather than a gradient fill. */
-  .plate::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    background: linear-gradient(
-      104deg,
-      transparent 34%,
-      rgba(237, 232, 224, 0.07) 47%,
-      rgba(191, 212, 238, 0.11) 50%,
-      transparent 62%
-    );
-    pointer-events: none;
-  }
-
-  /* The etch runs along each plate's leading edge on a single line, so the
-     fan reads as a legible ladder of domains rather than stacked paragraphs. */
-  .plate__etch {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    white-space: nowrap;
-  }
-
-  .plate__label {
-    font-family: var(--font-mono);
-    font-size: 0.625rem;
-    font-weight: 500;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: rgba(237, 232, 224, 0.66);
-  }
-
-  .plate__rule {
-    width: 1.25rem;
-    height: 1px;
-    background: rgba(191, 212, 238, 0.28);
-  }
-
-  .plate__metric {
-    font-family: var(--font-mono);
-    font-size: 0.625rem;
-    letter-spacing: 0.04em;
-    color: rgba(191, 212, 238, 0.52);
+  :global(html[data-intro][data-intro-reveal]) .hero__content,
+  :global(html[data-intro][data-intro-reveal]) .hero__scroll {
+    opacity: 1;
+    transform: none;
+    transition:
+      opacity 1000ms var(--e-out),
+      transform 1200ms var(--e-out);
   }
 
   /* --- Content ---------------------------------------------------------- */
@@ -227,6 +104,12 @@ const plateSpecs = strata.map((s) => ({
 
   .hero__content > * {
     pointer-events: auto;
+  }
+
+  .hero__type {
+    /* The dimming ellipse is measured from this box, so it must wrap exactly
+       the type that needs protecting and nothing else. */
+    display: inline-block;
   }
 
   .hero__eyebrow {
@@ -245,13 +128,14 @@ const plateSpecs = strata.map((s) => ({
     display: flex;
     flex-direction: column;
     margin-bottom: var(--s-8);
-    /* The name has to survive on top of a bright refraction highlight, so it
-       carries its own soft shadow rather than relying on the backdrop. */
-    text-shadow: 0 2px 40px rgba(0, 0, 0, 0.85);
+    /* Belt and braces over the dimming ellipse: the type carries its own
+       shadow so a bright column passing behind it can never break the read. */
+    text-shadow:
+      0 2px 30px rgba(0, 0, 0, 0.95),
+      0 0 60px rgba(0, 0, 0, 0.8);
   }
 
   .hero__name-line:last-child {
-    /* Indent the surname to echo the diagonal of the plate fan. */
     margin-left: 0.14em;
   }
 
@@ -260,6 +144,7 @@ const plateSpecs = strata.map((s) => ({
     line-height: 1.5;
     color: var(--bone-70);
     max-width: 34ch;
+    text-shadow: 0 2px 20px rgba(0, 0, 0, 0.9);
   }
 
   .hero__school {
@@ -270,25 +155,21 @@ const plateSpecs = strata.map((s) => ({
   .hero__hint {
     margin-top: var(--s-8);
     color: var(--bone-55);
-    /* Only meaningful once the canvas is live and draggable. */
     opacity: 0;
     transition: opacity var(--d-slow) var(--e-out);
   }
 
-  :global([data-strata-ready]) .hero__hint {
+  .rain[data-ready] ~ .hero__content .hero__hint,
+  :global(.hero:has(.rain[data-ready])) .hero__hint {
     opacity: 1;
   }
 
-  /* Drag is disabled under reduced motion, so promising it would be a false
-     affordance. The scene is still composed and rendered — just not draggable. */
-  @media (prefers-reduced-motion: reduce) {
-    :global([data-strata-ready]) .hero__hint {
-      opacity: 0;
+  /* No pointer to decode with, and no drag either — promising an interaction
+     that cannot happen is worse than saying nothing. */
+  @media (prefers-reduced-motion: reduce), (pointer: coarse) {
+    .hero__hint {
+      opacity: 0 !important;
     }
-  }
-
-  :global([data-strata-ready]) .hero__plates {
-    opacity: 0;
   }
 
   /* --- Scroll cue ------------------------------------------------------- */
@@ -320,45 +201,7 @@ const plateSpecs = strata.map((s) => ({
     width: 4.5rem;
   }
 
-  /* --- Responsive -------------------------------------------------------
-     Mobile is not a shrunken desktop: the fan tightens and rotates upright so
-     it sits behind the type as a texture rather than competing with it. */
-  @media (max-width: 60rem) {
-    /* The etch cannot survive here: at this width the sheets overlap faster
-       than the line-height, and the labels smear into each other. Below the
-       breakpoint the strata become pure material — every metric they carry is
-       stated again in the sections underneath, so nothing is lost. */
-    .plate__etch {
-      display: none;
-    }
-
-    /* Four sheets instead of six. A tighter stack reads as deliberate; six
-       compressed ones read as a rendering fault. */
-    .plate:nth-child(n + 5) {
-      display: none;
-    }
-
-    .hero__plates {
-      width: min(34rem, 96vw);
-      aspect-ratio: 16 / 9;
-      transform: translate3d(4%, -6%, 0) rotate(-2deg);
-      opacity: 0.8;
-    }
-
-    .plate {
-      inset: 26% 6%;
-      transform: translate3d(
-          calc(var(--i) * 3.4%),
-          calc(var(--i) * -13%),
-          calc(var(--i) * -52px)
-        )
-        rotateX(8deg) rotateY(-12deg);
-    }
-  }
-
-  /* The nav pill owns the bottom of the screen on phones and the scroll cue
-     collided with it. The cue is redundant there anyway — the nav is visible
-     from the first frame. */
+  /* The nav pill owns the bottom of the screen on phones. */
   @media (max-width: 48rem) {
     .hero__scroll {
       display: none;

@@ -145,3 +145,13 @@
     font-size: 0.5625rem;
   }
 }
+
+/* Held back with the rest of the hero while the intro storm runs. */
+html[data-intro] .nav {
+  opacity: 0;
+}
+
+html[data-intro][data-intro-reveal] .nav {
+  opacity: 1;
+  transition: opacity 900ms var(--e-out);
+}

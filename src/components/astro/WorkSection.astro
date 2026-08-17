@@ -19,7 +19,10 @@ const projects = (await getCollection('projects')).sort(
             <a class="work__link" href={`/work/${p.id}/`}>
               {/* Paired with the same name on the case study cover, so the
                   image morphs across the navigation rather than reloading. */}
-              <div class="work__media" style={`view-transition-name: cover-${p.id}`}>
+              <div
+                class="work__media"
+                style={`view-transition-name: cover-${p.id}; --arn: ${(p.data.cover.width / p.data.cover.height).toFixed(4)}`}
+              >
                 <Image
                   src={p.data.cover}
                   alt={p.data.coverAlt}
@@ -83,9 +86,12 @@ const projects = (await getCollection('projects')).sort(
     gap: clamp(4rem, 9vw, 9rem);
   }
 
+  /* The media column sizes to the image rather than to a fraction. Now that
+     images keep their own aspect ratio they no longer fill a fr column, and a
+     fixed fraction left a dead gap between picture and text. */
   .work__link {
     display: grid;
-    grid-template-columns: 1.05fr 1fr;
+    grid-template-columns: auto minmax(0, 1fr);
     align-items: center;
     gap: clamp(2rem, 5vw, 5rem);
   }
@@ -94,15 +100,19 @@ const projects = (await getCollection('projects')).sort(
      column. Only on wide screens — stacked layouts always lead with media. */
   @media (min-width: 60rem) {
     .work__row:nth-child(even) .work__link {
-      grid-template-columns: 1fr 1.05fr;
+      grid-template-columns: minmax(0, 1fr) auto;
     }
 
     .work__row:nth-child(even) .work__media {
       order: 2;
+      justify-self: end;
     }
   }
 
   /* --- Media ------------------------------------------------------------ */
+  /* Height is the constant across rows and width follows each image's own
+     aspect ratio. Forcing a 4:3 box meant object-fit: cover was slicing the
+     top and bottom off the square covers. */
   .work__media {
     position: relative;
     overflow: hidden;
@@ -111,13 +121,20 @@ const projects = (await getCollection('projects')).sort(
     box-shadow:
       var(--shadow-inset),
       var(--shadow-ambient);
-    aspect-ratio: 4 / 3;
+    /* Width is computed from the ratio rather than left to `auto`. In an
+       auto-sized grid track the image's intrinsic 662px drove the track width,
+       so the column stayed wide and left a dead gap next to the picture. */
+    --h: clamp(15rem, 27vw, 24rem);
+    height: var(--h);
+    width: calc(var(--h) * var(--arn, 1));
+    max-width: 100%;
+    aspect-ratio: var(--arn, 1);
   }
 
   .work__img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
     /* Images start slightly desaturated and dim so the page reads as one dark
        composition; hover restores them. Colour is earned, not given. */
     filter: saturate(0.72) brightness(0.78) contrast(1.04);

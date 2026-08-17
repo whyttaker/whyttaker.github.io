@@ -81,6 +81,37 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
         el.dataset.glass = isChromium ? 'a' : 'b';
       })();
     </script>
+
+    {/* Intro gate.
+
+        Decided synchronously before first paint, because the CSS that hides
+        the hero during the storm keys off this attribute — set it from a
+        deferred module and you get a visible flash of the finished hero first.
+
+        It deliberately does NOT run when: the visitor asked for reduced
+        motion, they are deep-linking to a section, they have already seen it
+        this session, or this is not the home page. And a failsafe removes it
+        regardless after 4s, so a thrown exception in the rain can never leave
+        someone staring at a permanently dimmed page. */}
+    <script is:inline>
+      (function () {
+        var el = document.documentElement;
+        try {
+          if (location.pathname !== '/' && location.pathname !== '/index.html') return;
+          if (location.hash) return;
+          if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+          var force = location.search.indexOf('intro') !== -1;
+          if (!force && sessionStorage.getItem('ww-intro')) return;
+        } catch (e) {
+          return;
+        }
+        el.setAttribute('data-intro', '');
+        setTimeout(function () {
+          el.removeAttribute('data-intro');
+          el.removeAttribute('data-intro-reveal');
+        }, 5000);
+      })();
+    </script>
   </head>
 
   <body>
@@ -103,11 +134,13 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
       import { initSmoothScroll } from '../scripts/smooth-scroll';
       import { initMagnetic } from '../scripts/magnetic';
       import { initStackField } from '../scripts/stack-field';
+      import { initRain } from '../scripts/rain';
 
       initSmoothScroll();
       initGlassLighting();
       initMagnetic();
       initStackField();
+      initRain();
     </script>
   </body>
 </html>
