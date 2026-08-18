@@ -11,6 +11,39 @@ import { handoffAt, heroProgress } from '../handoff';
 
 const REDUCED = '(prefers-reduced-motion: reduce)';
 
+/**
+ * Measures the two display-type lines so the rain can assemble the name on top
+ * of them exactly.
+ *
+ * The glyph name has to match position, line break and optical size, or the
+ * handover reads as a swap. Two adjustments earn their keep: monospace sits
+ * lower in its em box than Archivo, so the draw origin is nudged up; and the
+ * mono advance is ~0.6em, so matching the DOM line's *measured width* rather
+ * than its font size is what keeps the two the same length on screen.
+ */
+function measureNameTargets(canvas: HTMLCanvasElement) {
+  const lines = Array.from(
+    document.querySelectorAll<HTMLElement>('[data-name-line]')
+  );
+  const c = canvas.getBoundingClientRect();
+
+  return lines.map((el) => {
+    const r = el.getBoundingClientRect();
+    const text = el.textContent?.trim() ?? '';
+    const pitch = r.width / Math.max(1, text.length);
+    // Mono advance is about 0.6em, so this is the size that spans the same
+    // width with the same number of characters.
+    const size = pitch / 0.6;
+    return {
+      text,
+      x: r.left - c.left,
+      y: r.top - c.top - size * 0.12,
+      pitch,
+      size,
+    };
+  });
+}
+
 export function initRain(): void {
   const canvas = document.querySelector<HTMLCanvasElement>('[data-rain]');
   if (!canvas) return;
@@ -31,7 +64,7 @@ export function initRain(): void {
 
   if (document.documentElement.hasAttribute('data-intro')) {
     rain.runIntro(
-      'Whittaker Worland',
+      () => measureNameTargets(canvas),
       () => document.documentElement.setAttribute('data-intro-reveal', ''),
       () => {
         document.documentElement.removeAttribute('data-intro');

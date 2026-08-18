@@ -26,9 +26,13 @@ import { site } from '../../data/site';
         {site.company}
       </p>
 
+      {/* The intro measures these two lines and assembles the name out of the
+          rain at exactly their position, size and line break, so the handover
+          to the real typeface reads as the glyphs setting rather than as one
+          thing being swapped for another. */}
       <h1 class="hero__name t-display">
-        <span class="hero__name-line">Whittaker</span>
-        <span class="hero__name-line">Worland</span>
+        <span class="hero__name-line" data-name-line>Whittaker</span>
+        <span class="hero__name-line" data-name-line>Worland</span>
       </h1>
 
       <p class="hero__sub">
@@ -93,6 +97,30 @@ import { site } from '../../data/site';
     transition:
       opacity 1000ms var(--e-out),
       transform 1200ms var(--e-out);
+  }
+
+  /* The name is the element being morphed into, so it gets its own timing:
+     it comes up faster than the surrounding content and settles from a hair
+     under full size, meeting the canvas glyphs as they dissolve. Everything
+     else follows a beat later so the name lands on its own. */
+  :global(html[data-intro]) .hero__name {
+    opacity: 0;
+    transform: scale(0.986);
+    transform-origin: left center;
+  }
+
+  :global(html[data-intro][data-intro-reveal]) .hero__name {
+    opacity: 1;
+    transform: none;
+    transition:
+      opacity 620ms var(--e-out),
+      transform 900ms var(--e-out);
+  }
+
+  :global(html[data-intro][data-intro-reveal]) .hero__eyebrow,
+  :global(html[data-intro][data-intro-reveal]) .hero__sub,
+  :global(html[data-intro][data-intro-reveal]) .hero__hint {
+    transition-delay: 260ms;
   }
 
   /* --- Content ---------------------------------------------------------- */

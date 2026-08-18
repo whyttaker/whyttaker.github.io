@@ -79,8 +79,47 @@ interface FocalCol {
   active: boolean;
   glyph: string;
   lockChar: string | null;
+  /** Float, so the landing row can be an exact pixel target, not a cell. */
   lockRow: number;
   holding: boolean;
+  /** Intro name only: draw at this size instead of the focal size. */
+  lockSize?: number;
+}
+
+/*
+  Intro letters are their own falling particles rather than borrowed focal
+  columns.
+
+  Claiming columns had two failure modes that both showed up on screen: two
+  stacked lines routinely want the same column, and the loser was silently
+  dropped (WORLAND rendered as "W RLAND"); and snapping x to the 9px grid
+  jittered the letter pitch enough to read as broken spacing ("WHI T TAKER").
+  A particle owns an exact x and cannot collide with anything.
+*/
+interface Letter {
+  ch: string;
+  x: number;
+  /** Final size once landed. */
+  size: number;
+  /** Rows, float. */
+  head: number;
+  start: number;
+  target: number;
+  speed: number;
+  holding: boolean;
+}
+
+/** One line of the hero name, measured from the DOM it will morph into. */
+export interface NameTarget {
+  text: string;
+  /** Left edge, canvas px. */
+  x: number;
+  /** Cap top, canvas px. */
+  y: number;
+  /** Distance between character origins, canvas px. */
+  pitch: number;
+  /** Glyph size, canvas px. */
+  size: number;
 }
 
 interface ActiveMotif {
@@ -105,8 +144,15 @@ export interface RainHandle {
   /** 0 = at rest, 1 = fully handed over to the page below. */
   setHandoff(v: number): void;
   renderStill(): void;
-  /** Full-screen storm that spells `name` and then calms into the hero. */
-  runIntro(name: string, onReveal: () => void, onDone: () => void): void;
+  /** Full-screen storm that spells the name and calms into the hero. */
+  runIntro(
+    /* A getter, not a value: measured at placement time so the display webfont
+       has certainly loaded and layout has settled. Measuring up front raced
+       the font and produced a name of the wrong width. */
+    getTargets: () => NameTarget[],
+    onReveal: () => void,
+    onDone: () => void
+  ): void;
 }
 
 export function createRain(
@@ -140,6 +186,9 @@ export function createRain(
   /** >1 renders the landed characters larger — used for the intro name. */
   let phraseScale = 1;
   let phraseCols: FocalCol[] = [];
+  let letters: Letter[] = [];
+  /** Seconds; the intro lengthens this so the fade matches the DOM handover. */
+  let phraseFadeDur = 0.7;
   let phraseTimer = 3;
   let phraseGuard = 0;
 
@@ -152,13 +201,17 @@ export function createRain(
     wash in at the end — during the storm there is no clear zone at all,
     because there is nothing to protect yet.
   */
-  const INTRO_PHRASE_AT = 0.3;
-  const INTRO_REVEAL_AT = 2.0;
-  const INTRO_END_AT = 3.2;
+  const INTRO_PHRASE_AT = 0.45;
+  /** How long the letters take to fall into place. */
+  const INTRO_CONVERGE = 1.75;
+  /** Glyphs land at ~2.2s and hold before the handover. */
+  const INTRO_MORPH_AT = 2.75;
+  const INTRO_MORPH_MS = 780;
+  const INTRO_END_AT = 4.4;
   let introT = -1;
   let introPhraseStarted = false;
   let introRevealed = false;
-  let introName = '';
+  let introGetTargets: (() => NameTarget[]) | null = null;
   let onIntroReveal: (() => void) | null = null;
   let onIntroDone: (() => void) | null = null;
   /** 0 = no dimming wash (storm), 1 = full wash (resting hero). */
@@ -404,13 +457,16 @@ export function createRain(
   function releasePhrase() {
     for (const c of phraseCols) {
       c.lockChar = null;
+      c.lockSize = undefined;
       c.holding = false;
       c.speed = FOCAL_SPEED * (0.75 + Math.random() * 0.6);
     }
+    letters = [];
     phraseCols = [];
     phraseState = 'idle';
     phraseAlpha = 1;
     phraseScale = 1;
+    phraseFadeDur = 0.7;
     phraseTimer = 3 + Math.random() * 2.5;
   }
 
@@ -434,7 +490,7 @@ export function createRain(
     if (phraseState === 'converging') {
       // A stalled column must never strand the phrase half-formed.
       if (phraseGuard <= 0) return releasePhrase();
-      if (phraseCols.every((c) => c.holding)) {
+      if ((letters.length ? letters : phraseCols).every((c) => c.holding)) {
         phraseState = 'flash';
         phraseGuard = 0.5;
         phraseAlpha = 1;
@@ -445,13 +501,13 @@ export function createRain(
     if (phraseState === 'flash') {
       if (phraseGuard <= 0) {
         phraseState = 'fading';
-        phraseGuard = 0.7;
+        phraseGuard = phraseFadeDur;
       }
       return;
     }
 
     // fading
-    phraseAlpha = Math.max(0, phraseGuard / 0.7);
+    phraseAlpha = Math.max(0, phraseGuard / phraseFadeDur);
     if (phraseGuard <= 0) releasePhrase();
   }
 
@@ -513,7 +569,7 @@ export function createRain(
     // The storm drives everything faster until the reveal, then eases back to
     // the resting speed as the wash comes in.
     const storm =
-      introT < 0 ? 0 : 1 - Math.min(1, Math.max(0, (introT - INTRO_REVEAL_AT) / 1.0));
+      introT < 0 ? 0 : 1 - Math.min(1, Math.max(0, (introT - INTRO_MORPH_AT) / 1.1));
     const boost = 1 + handoff * 4 + storm * 0.75;
 
     // --- noise, one font assignment per tier -------------------------
@@ -552,7 +608,12 @@ export function createRain(
       }
 
       if (!c.holding) {
-        c.head += c.speed * boost * dt;
+        /* A column carrying a phrase letter is exempt from the speed boost.
+           Its speed was solved so that it arrives on the target row at a
+           precise moment; scaling it makes the whole line land early and in
+           formation, which is exactly the marshalled look the staggered start
+           heights exist to avoid. */
+        c.head += (c.lockChar !== null ? c.speed : c.speed * boost) * dt;
         if (c.lockChar !== null && c.head >= c.lockRow) {
           c.head = c.lockRow;
           c.holding = true;
@@ -560,7 +621,9 @@ export function createRain(
       }
 
       const row = Math.floor(c.head);
-      const y = row * FOCAL_CELL_H;
+      // Holding letters use the float head so the intro name lands on its
+      // measured baseline rather than snapping to the 17px grid.
+      const y = c.holding ? c.head * FOCAL_CELL_H : row * FOCAL_CELL_H;
 
       if (!c.holding && y > H + 40) {
         c.active = Math.random() < 0.8;
@@ -574,8 +637,10 @@ export function createRain(
       if (c.holding && c.lockChar) {
         // Landed. Flares white, then fades in place. The second cool pass
         // separates it from the noise without introducing a new hue.
-        if (phraseScale !== 1) {
-          ctx.font = `600 ${FOCAL_SIZE * phraseScale}px "JetBrains Mono", ui-monospace, monospace`;
+        const size = c.lockSize ?? FOCAL_SIZE * phraseScale;
+        const resized = size !== FOCAL_SIZE;
+        if (resized) {
+          ctx.font = `600 ${size}px "JetBrains Mono", ui-monospace, monospace`;
         }
         ctx.globalAlpha = phraseAlpha;
         ctx.fillStyle = phraseState === 'flash' ? '#ffffff' : `rgb(${BONE})`;
@@ -584,7 +649,7 @@ export function createRain(
         ctx.fillStyle = `rgb(${RIM})`;
         ctx.fillText(c.lockChar, x, y);
         ctx.fillStyle = `rgb(${BONE})`;
-        if (phraseScale !== 1) {
+        if (resized) {
           ctx.font = `500 ${FOCAL_SIZE}px "JetBrains Mono", ui-monospace, monospace`;
         }
         continue;
@@ -603,6 +668,8 @@ export function createRain(
       ctx.globalAlpha = 0.62;
       ctx.fillText(c.glyph, x, y);
     }
+
+    drawLetters(dt);
 
     ctx.globalAlpha = 1;
     drawClearZone();
@@ -665,33 +732,119 @@ export function createRain(
     drawFrame(dt);
   }
 
+  /**
+   * Assembles the name across the falling columns at the exact position, size
+   * and line break of the display type it will become.
+   *
+   * Each character claims the column whose x is nearest its target, so the
+   * letter lands where it belongs without ever sliding sideways — a column
+   * only ever falls straight down. The landing row is a float rather than a
+   * cell index, so the baseline is pixel-accurate instead of snapping to the
+   * 17px grid, which at 100px glyphs would be a visible jolt.
+   */
+  function placeNameTargets(duration: number) {
+    phraseCols = [];
+    letters = [];
+
+    for (const t of introGetTargets?.() ?? []) {
+      const text = t.text.toUpperCase();
+      for (let i = 0; i < text.length; i++) {
+        const ch = text[i];
+        if (ch === ' ') continue;
+        // Each letter starts above the frame at its own height and gets the
+        // speed that lands it on the shared row at the shared moment, so the
+        // descent looks unrelated right up until it isn't.
+        const head = -(2 + Math.random() * 30);
+        const target = t.y / FOCAL_CELL_H;
+        letters.push({
+          ch,
+          x: t.x + i * t.pitch,
+          size: t.size,
+          head,
+          start: head,
+          target,
+          speed: (target - head) / duration,
+          holding: false,
+        });
+      }
+    }
+
+    if (!letters.length) return;
+    phraseState = 'converging';
+    phraseAlpha = 1;
+    phraseGuard = duration + 3;
+  }
+
+  function drawLetters(dt: number) {
+    if (!letters.length) return;
+
+    for (const l of letters) {
+      if (!l.holding) {
+        l.head += l.speed * dt;
+        if (l.head >= l.target) {
+          l.head = l.target;
+          l.holding = true;
+        }
+      }
+
+      const y = l.head * FOCAL_CELL_H;
+
+      if (l.holding) {
+        ctx.font = `600 ${l.size}px "JetBrains Mono", ui-monospace, monospace`;
+        ctx.globalAlpha = phraseAlpha;
+        ctx.fillStyle = phraseState === 'flash' ? '#ffffff' : `rgb(${BONE})`;
+        ctx.fillText(l.ch, l.x, y);
+        ctx.globalAlpha = phraseAlpha * 0.3;
+        ctx.fillStyle = `rgb(${RIM})`;
+        ctx.fillText(l.ch, l.x, y);
+        continue;
+      }
+
+      /* On the way down a letter is indistinguishable from the storm: focal
+         size, scrambling, dim. It rushes to full size only over the last
+         third of its fall. Drawn at final size the whole way, the letters
+         read as bright blobs smearing down the screen and give the surprise
+         away long before they land. */
+      const p = Math.min(
+        1,
+        Math.max(0, (l.head - l.start) / (l.target - l.start || 1))
+      );
+      const grow = Math.max(0, (p - 0.66) / 0.34);
+      ctx.font = `600 ${FOCAL_SIZE + (l.size - FOCAL_SIZE) * grow * grow}px "JetBrains Mono", ui-monospace, monospace`;
+      ctx.globalAlpha = 0.4 + 0.45 * p;
+      ctx.fillStyle = `rgb(${BONE})`;
+      ctx.fillText(grow > 0.55 ? l.ch : randomGlyph(), l.x, y);
+    }
+
+    ctx.globalAlpha = 1;
+    ctx.font = `500 ${FOCAL_SIZE}px "JetBrains Mono", ui-monospace, monospace`;
+  }
+
   function updateIntro(dt: number) {
     introT += dt;
 
     if (!introPhraseStarted && introT >= INTRO_PHRASE_AT) {
       introPhraseStarted = true;
-      const text = introName.toUpperCase();
-      // Aimed at the row the real display type will occupy, so the glyph name
-      // and the type that replaces it sit in the same band of the screen.
-      const targetRow = clearRect
-        ? Math.round(clearRect.cy / FOCAL_CELL_H)
-        : Math.floor(rows * 0.45);
-      /* Tracked out across the grid and drawn double size. At the focal cell
-         width a 17-character name spans barely 150px, which is invisible as a
-         hero moment on a wide screen. */
-      const spread = 4;
-      const startCol = Math.max(0, Math.floor((focalCols - text.length * spread) / 2));
-      phraseScale = 2;
-      placePhrase(text, startCol, targetRow, 1.25, spread);
+      placeNameTargets(INTRO_CONVERGE);
     }
 
-    if (!introRevealed && introT >= INTRO_REVEAL_AT) {
+    /*
+      The morph. Rather than the phrase fading on its own schedule, the intro
+      drives it: at the same instant the glyphs begin dissolving, the real
+      display type is told to come up. The two cross in the middle, in the same
+      position and at the same size, so it reads as the monospace setting into
+      Archivo rather than as one element replacing another.
+    */
+    if (!introRevealed && introT >= INTRO_MORPH_AT) {
       introRevealed = true;
+      phraseFadeDur = INTRO_MORPH_MS / 1000;
+      phraseState = 'fading';
+      phraseGuard = phraseFadeDur;
       onIntroReveal?.();
     }
 
     clearK =
-      introT < INTRO_REVEAL_AT ? 0 : Math.min(1, (introT - INTRO_REVEAL_AT) / 0.9);
+      introT < INTRO_MORPH_AT ? 0 : Math.min(1, (introT - INTRO_MORPH_AT) / 1.1);
 
     if (introT >= INTRO_END_AT) {
       introT = -1;
@@ -764,8 +917,8 @@ export function createRain(
       handoff = v;
     },
     renderStill,
-    runIntro(name, onReveal, onDone) {
-      introName = name;
+    runIntro(getTargets, onReveal, onDone) {
+      introGetTargets = getTargets;
       onIntroReveal = onReveal;
       onIntroDone = onDone;
       introT = 0;
