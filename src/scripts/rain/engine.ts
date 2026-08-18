@@ -1128,7 +1128,19 @@ export function createRain(
 
   // --------------------------------------------------------------- events
 
+  /* Mobile browsers fire a resize event as their address bar collapses or
+     expands while the page settles — the viewport's height changes, its
+     width doesn't. Reacting to that mid-intro re-randomizes the whole field
+     via layout() and leaves the letter targets measured at intro start
+     pointing at stale coordinates, so the assembled name lands somewhere the
+     real DOM text isn't once it hands over. A real resize (rotation, an
+     actual window resize) always changes the width, so gating on that is
+     enough to ignore the address-bar case without missing a genuine one. */
+  let lastResizeWidth = window.innerWidth;
+
   const onResize = () => {
+    if (window.innerWidth === lastResizeWidth) return;
+    lastResizeWidth = window.innerWidth;
     layout();
     if (opts.reduced) renderStill();
   };

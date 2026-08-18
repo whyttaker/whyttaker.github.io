@@ -220,8 +220,25 @@ const { project: p } = Astro.props;
       gap: var(--s-6);
     }
 
-    .work__media {
-      aspect-ratio: 16 / 10;
+    /* Role and Outcome no longer share a row. Wrapped side by side with no
+       minimum width, a long outcome (several run 60-80 characters) squeezed
+       into half the column and wrapped across many narrow lines next to a
+       short one-line Role — dense and harder to read than giving each fact
+       the full width. */
+    .work__facts {
+      flex-direction: column;
+      gap: var(--s-4);
+    }
+
+    /* A little more air between blocks — text wraps onto more lines at this
+       width while the margins stayed the same, which is what read as
+       crowded even though nothing actually got closer together. */
+    .work__thesis {
+      margin-bottom: var(--s-8);
+    }
+
+    .work__stack {
+      margin-bottom: var(--s-8);
     }
   }
 </style>
