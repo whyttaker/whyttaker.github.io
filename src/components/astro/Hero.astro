@@ -5,10 +5,11 @@ import { site } from '../../data/site';
   The hero is a canvas of falling glyphs (see scripts/rain/) plus real DOM text
   in front of it.
 
-  The canvas is decorative and aria-hidden. Name, role and school are ordinary
-  HTML above it, so the visual can fail completely — no JS, no canvas support,
-  a thrown exception — and the hero still says who this is. That constraint is
-  why there is no loading state and no layout reserved for anything to arrive.
+  The canvas is decorative and aria-hidden. Name, role and description are
+  ordinary HTML above it, so the visual can fail completely — no JS, no canvas
+  support, a thrown exception — and the hero still says who this is. That
+  constraint is why there is no loading state and no layout reserved for
+  anything to arrive.
 
   A no-JS visitor gets the composition below with a plain black field behind
   it, which is a legitimate design rather than a broken one.
@@ -24,11 +25,13 @@ import { site } from '../../data/site';
   <canvas class="rain rain--name" data-rain-name aria-hidden="true"></canvas>
 
   <div class="shell hero__content">
-    {/* The rain dims behind this block so the display type stays crisp. */}
-    <div class="hero__type" data-rain-clear>
+    {/* The rain dims behind this block so the display type stays crisp — the
+        "hero" value marks this as the one zone that also gets the bespoke
+        left-side wash, rather than just the generic pool every other tracked
+        block down the page gets. */}
+    <div class="hero__type" data-rain-clear="hero">
       <p class="hero__eyebrow t-mono">
-        {site.role} <span class="hero__dot">·</span>
-        {site.company}
+        {site.role}
       </p>
 
       {/* The intro measures these two lines and assembles the name out of the
@@ -41,12 +44,11 @@ import { site } from '../../data/site';
       </h1>
 
       <p class="hero__sub">
-        {site.education}<br />
-        <span class="hero__school">{site.school}</span>
+        {site.description}<br />
+        <span class="hero__school">{site.passion}</span>
       </p>
     </div>
 
-    <p class="hero__hint t-mono" data-hero-hint>Move to decode</p>
   </div>
 
   <a class="hero__scroll t-mono" href="#work">
@@ -62,17 +64,27 @@ import { site } from '../../data/site';
     display: grid;
     align-items: center;
     padding-block: var(--s-32) var(--s-24);
-    overflow: clip;
+    /* No clip: the rain canvas below is deliberately taller than this box so
+       it can fade out a little past the section's own bottom edge instead of
+       stopping in a hard line. Nothing else in the hero overflows it. */
   }
 
   /* Sits below the global grain layer (z-index 1) so the film grain textures
      the rain rather than being hidden by it. */
   .rain {
     position: absolute;
-    inset: 0;
+    top: 0;
+    left: 0;
+    right: 0;
     z-index: 0;
     width: 100%;
-    height: 100%;
+    /* Runs 100px past the hero's own height and fades out over that span via
+       the mask below — real falling glyphs feathering out, not a synthetic
+       overlay, so the edge reads as soft and a little uneven rather than a
+       geometric cutoff. */
+    height: calc(100% + 100px);
+    -webkit-mask-image: linear-gradient(to bottom, black calc(100% - 100px), transparent 100%);
+    mask-image: linear-gradient(to bottom, black calc(100% - 100px), transparent 100%);
     display: block;
     opacity: 0;
     transition: opacity 900ms var(--e-out);
@@ -106,7 +118,6 @@ import { site } from '../../data/site';
      a readable hero. */
   :global(html[data-intro]) .hero__eyebrow,
   :global(html[data-intro]) .hero__sub,
-  :global(html[data-intro]) .hero__hint,
   :global(html[data-intro]) .hero__scroll {
     opacity: 0.04;
     transform: translateY(0.6rem);
@@ -114,7 +125,6 @@ import { site } from '../../data/site';
 
   :global(html[data-intro][data-intro-reveal]) .hero__eyebrow,
   :global(html[data-intro][data-intro-reveal]) .hero__sub,
-  :global(html[data-intro][data-intro-reveal]) .hero__hint,
   :global(html[data-intro][data-intro-reveal]) .hero__scroll {
     opacity: 1;
     transform: none;
@@ -156,12 +166,7 @@ import { site } from '../../data/site';
   .hero__eyebrow {
     display: flex;
     align-items: center;
-    gap: 0.6rem;
     margin-bottom: var(--s-6);
-    color: var(--bone-55);
-  }
-
-  .hero__dot {
     color: var(--bone-55);
   }
 
@@ -193,26 +198,6 @@ import { site } from '../../data/site';
     font-size: var(--t-meta);
   }
 
-  .hero__hint {
-    margin-top: var(--s-8);
-    color: var(--bone-55);
-    opacity: 0;
-    transition: opacity var(--d-slow) var(--e-out);
-  }
-
-  .rain[data-ready] ~ .hero__content .hero__hint,
-  :global(.hero:has(.rain[data-ready])) .hero__hint {
-    opacity: 1;
-  }
-
-  /* No pointer to decode with, and no drag either — promising an interaction
-     that cannot happen is worse than saying nothing. */
-  @media (prefers-reduced-motion: reduce), (pointer: coarse) {
-    .hero__hint {
-      opacity: 0 !important;
-    }
-  }
-
   /* --- Scroll cue ------------------------------------------------------- */
   .hero__scroll {
     position: absolute;
@@ -232,14 +217,20 @@ import { site } from '../../data/site';
 
   .hero__scroll-rule {
     display: block;
-    width: 3rem;
+    /* Authored at the hover (long) size and scaled down at rest, rather than
+       animating width — the gradient's stops are proportional (0%/100%), so
+       scaling it renders identically to the old width animation while
+       running on the compositor instead of triggering layout every frame. */
+    width: 4.5rem;
     height: 1px;
     background: linear-gradient(to right, transparent, var(--bone-22));
-    transition: width var(--d-slow) var(--e-out);
+    transform: scaleX(0.6667);
+    transform-origin: left;
+    transition: transform var(--d-slow) var(--e-out);
   }
 
   .hero__scroll:hover .hero__scroll-rule {
-    width: 4.5rem;
+    transform: scaleX(1);
   }
 
   /* The nav pill owns the bottom of the screen on phones. */

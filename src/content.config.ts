@@ -7,6 +7,11 @@ const projects = defineCollection({
   schema: ({ image }) =>
     z.object({
       title: z.string(),
+      /* The one real grouping split on the homepage: paid professional work
+         vs. personal/game projects. Everything else (discipline, context)
+         stays free text on purpose — this is the single field that changes
+         which list a row renders in. */
+      category: z.enum(['professional', 'personal']).default('personal'),
       /* Discipline and context are the structural device for the work rows.
          They encode something true about each project — unlike an index
          number, which would imply a sequence these four don't have. */

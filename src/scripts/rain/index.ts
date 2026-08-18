@@ -50,14 +50,36 @@ function measureNameTargets(canvas: HTMLCanvasElement) {
 
   return lines.map((el) => {
     const r = el.getBoundingClientRect();
-    const text = el.textContent?.trim() ?? '';
+    const text = el.textContent ?? '';
 
-    /* Per-letter positions from measuring each leading substring, plus the
-       accumulated tracking. Multiplying a single advance only works for a
-       monospaced face; this holds for any of them. */
+    /*
+      Per-letter positions come from the browser's own geometry — a Range over
+      each character — not from measuring leading substrings.
+
+      Prefix measurement cannot see the character that follows, so it misses
+      every kerning pair: measureText('Whittak') has no idea an 'e' is coming,
+      and the k-e kern that pulls it 5.5px left never gets applied. The same
+      happened to the 'o' in Worland behind the W, at 8px. Every other letter
+      in the name agreed to within 0.02px, which is exactly the signature of a
+      kerning miss rather than a systematic offset.
+
+      Ranges are ground truth by construction: whatever the browser will do
+      when the real element takes over is what gets measured here.
+    */
+    const node = el.firstChild;
     const offsets: number[] = [];
-    for (let i = 0; i < text.length; i++) {
-      offsets.push(probe.measureText(text.slice(0, i)).width + i * letterSpacing);
+    if (node && node.nodeType === Node.TEXT_NODE) {
+      const range = document.createRange();
+      for (let i = 0; i < text.length; i++) {
+        range.setStart(node, i);
+        range.setEnd(node, i + 1);
+        offsets.push(range.getBoundingClientRect().left - r.left);
+      }
+    } else {
+      // No text node to range over; fall back to prefix measurement.
+      for (let i = 0; i < text.length; i++) {
+        offsets.push(probe.measureText(text.slice(0, i)).width + i * letterSpacing);
+      }
     }
 
     return {
@@ -82,11 +104,11 @@ export function initRain(): void {
   if (!canvas) return;
 
   const hero = document.getElementById('hero');
-  const clearEl = document.querySelector<HTMLElement>('[data-rain-clear]');
+  const clearEls = Array.from(document.querySelectorAll<HTMLElement>('[data-rain-clear]'));
   const reduced = window.matchMedia(REDUCED).matches;
 
   const nameCanvas = document.querySelector<HTMLCanvasElement>('[data-rain-name]');
-  const rain = createRain(canvas, { reduced, clearEl, nameCanvas });
+  const rain = createRain(canvas, { reduced, clearEls, nameCanvas });
   canvas.dataset.ready = '';
 
   if (reduced) {

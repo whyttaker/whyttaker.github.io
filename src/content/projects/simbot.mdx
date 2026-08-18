@@ -1,0 +1,77 @@
+---
+title: SimBot
+category: professional
+discipline: AI & Automation
+context: Amazon, Seller Partner Services
+tagline: AI-powered automation platform cutting team response times ~95%, from days to minutes
+thesis: An event-driven automation platform that routes internal requests to the right LLM and resolves them without a human in the loop.
+outcome: ~95% faster response time (days to minutes)
+role: Software Development Engineer Intern, Amazon
+cover: ../../assets/projects/simbot.webp
+coverAlt: Icon mark for SimBot
+stack:
+  - AWS Bedrock
+  - AWS CDK
+  - DynamoDB
+  - SNS/SQS
+  - REST APIs
+  - Prompt Engineering
+systems:
+  - Event-Driven Architecture
+  - LLM Orchestration
+  - Knowledge Bases
+tags:
+  - Generative AI
+  - AWS Bedrock
+  - Prompt Engineering
+  - Automation
+order: 2
+---
+
+<section data-block="overview">
+<span class="t-mono">Overview</span>
+## About the Project
+
+SimBot is an AI-powered automation platform I architected during my SDE internship on Amazon's Seller Partner Services team. It sits on an event-driven backbone (SNS/SQS) and routes incoming requests to LLMs through AWS Bedrock, including OpenAI, Anthropic, and DeepSeek models, to resolve requests that previously required a person to manually pick up, investigate, and answer. Response times on those requests dropped by roughly 95%, from multi-day turnaround to minutes.
+</section>
+
+<section data-block="process">
+<span class="t-mono">Design Process</span>
+## Design & Vision
+
+The team's existing process for handling routine internal requests was manual and serial: a request came in, sat in a queue, and waited for whoever was free to research and respond. The goal wasn't to replace that judgment entirely but to remove the wait: most of these requests followed known patterns that a well-grounded model could resolve directly, escalating only what genuinely needed a person.
+
+That meant the design had to earn trust in the model's answers before it could remove the human from the loop, which is what drove the investment in SOP-based knowledge bases rather than relying on a model's general knowledge alone.
+</section>
+
+<section data-block="implementation">
+<span class="t-mono">Implementation</span>
+## Technical Architecture
+
+SimBot's infrastructure was built with AWS CDK, backed by DynamoDB and SQS-driven data pipelines, so incoming requests could be ingested, queued, and processed asynchronously across the event-driven architecture. Requests are routed through AWS Bedrock to the appropriate model, with SOP-based knowledge bases grounding responses in the team's actual procedures rather than a model's general knowledge.
+
+REST API contracts define how SimBot integrates with internal services, which let cross-functional and international teams plug into it for onboarding, code review support, and deployment questions without needing to understand its internals.
+</section>
+
+<section data-block="algorithms">
+<span class="t-mono">Prompt Engineering</span>
+## Tuning the Model
+
+A meaningful part of the work was iterating on prompt engineering against real production feedback: refining how SOP knowledge was retrieved and framed for the model so responses stayed accurate and consistent as the range of request types grew. This feedback loop, more than any single architectural choice, is what got response quality to a place where the team trusted SimBot with requests it used to handle by hand.
+</section>
+
+<section data-block="challenges">
+<span class="t-mono">Key Engineering Challenges</span>
+## What Was Hard
+
+Getting from "an LLM can answer this" to "the team trusts this answer enough to stop doing it manually" was the real challenge: it required grounding every response in the team's actual SOPs rather than letting the model improvise, and continuously tuning that grounding as production feedback surfaced gaps.
+
+The other challenge was integrating multiple model providers (OpenAI, Anthropic, DeepSeek) behind one consistent interface via Bedrock, so the platform wasn't locked to a single model's behavior and could route requests to whichever model handled a given request type best.
+</section>
+
+<section data-block="takeaways">
+<span class="t-mono">Takeaways</span>
+## What I Learned
+
+SimBot was my first time designing a system where the core "business logic" was a prompt against a knowledge base rather than deterministic code, which changes how you think about testing and trust: validation has to happen against real feedback, not just unit tests. It also showed me how much an event-driven backbone matters for this kind of system: decoupling ingestion from processing via SNS/SQS meant the platform could absorb bursts of requests without falling behind.
+</section>

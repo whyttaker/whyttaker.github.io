@@ -91,7 +91,7 @@ export default function GlassNav({ items, monogram, sections }: Props) {
       <div className={`nav__shell ${condensed ? 'glass glass--pill' : ''}`}>
         {/* The accessible name has to contain the visible text, or voice
             control users saying "click WW" get no match. */}
-        <a className="nav__mark" href="/" aria-label={`${monogram} — home`}>
+        <a className="nav__mark" href="/" aria-label={`${monogram}, home`}>
           {monogram}
         </a>
 

@@ -26,11 +26,11 @@ export const experience: Role[] = [
     badge: 'SDE',
     kind: 'Current',
     location: 'San Diego, CA',
-    period: 'March 2024 — Present',
+    period: 'March 2024 - Present',
     start: '2024',
     teams: [
       {
-        name: 'Seller Partner Services — Financial Foundational Services',
+        name: 'Seller Partner Services: Financial Foundational Services',
         bullets: [
           'Engineered and launched a new scalable, high-throughput region for a financial data aggregation pipeline handling 100M+ daily requests, migrated legacy region with zero-downtime cutover and 100% data integrity, coordinating across 200+ downstream client teams.',
           'Designed end-to-end AWS infrastructure using IaC via AWS CDK, provisioning DynamoDB, S3, SNS, SQS, EC2, and CloudWatch to automate deployments, backfill data, and enable fault-tolerant, event-driven architecture.',
@@ -50,7 +50,7 @@ export const experience: Role[] = [
         ],
       },
       {
-        name: 'Creators Org — Product Advertising API',
+        name: 'Creators Org: Product Advertising API',
         bullets: [
           'Modernized legacy VIP-based architecture by implementing AWS Network Load Balancers, improving system scalability, traffic management, and monitoring visibility across production environments.',
           'Developed local testing support that removed ~90% of deployment friction, empowering engineers to validate code locally and saving the team multiple days per development cycle.',
@@ -66,11 +66,11 @@ export const experience: Role[] = [
     badge: 'SDE',
     kind: 'Internship',
     location: 'San Diego, CA',
-    period: 'June 2023 — September 2023',
+    period: 'June 2023 - September 2023',
     start: '2023',
     teams: [
       {
-        name: 'Seller Partner Services — Financial Foundational Services',
+        name: 'Seller Partner Services: Financial Foundational Services',
         bullets: [
           'Architected SimBot, an AI-powered automation platform on event-driven architecture (SNS/SQS), cutting team response times by ~95% (days to minutes) via AWS Bedrock integrations with models including OpenAI, Anthropic, and DeepSeek.',
           "Built SimBot's scalable AWS infrastructure using IaC (AWS CDK), DynamoDB, and SQS-driven data pipelines; built SOP-based knowledge bases and applied prompt engineering to optimize LLM behavior from production user feedback.",
@@ -94,7 +94,7 @@ export const experience: Role[] = [
     badge: 'SWE',
     kind: 'Internship',
     location: 'Remote',
-    period: 'June 2022 — September 2022',
+    period: 'June 2022 - September 2022',
     start: '2022',
     teams: [
       {

@@ -48,7 +48,10 @@ const facts = [
         <p class="case__tagline t-lead">{d.tagline}</p>
       </header>
 
-      <figure class="case__cover" style={`view-transition-name: cover-${project.id}`}>
+      <figure
+        class="case__cover"
+        style={`view-transition-name: cover-${project.id}; --arn: ${(d.cover.width / d.cover.height).toFixed(4)}`}
+      >
         <Image
           src={d.cover}
           alt={d.coverAlt}
@@ -144,17 +147,29 @@ const facts = [
     margin-bottom: var(--sp-section);
     border-radius: var(--r-md);
     overflow: hidden;
-    background: var(--surface-01);
+    /* True black, not --surface-01 — a "recessed panel" grey reads as a
+       visible box the moment it letterboxes a square cover, since even a
+       10-in-255 lift off pure black is obvious against a solid true-black
+       page. Matching --void lets the pillars disappear into the page. */
+    background: var(--void);
     box-shadow:
       var(--shadow-inset),
       var(--shadow-ambient);
+    /* Sized to each cover's own ratio rather than a fixed widescreen crop —
+       the square icon marks (SimBot, DUB→ZAZ, H&J Cabinets) were getting
+       their logos sliced off by a forced 21:9 object-fit: cover. The height
+       cap keeps those square/near-square covers from towering over the page
+       at full shell width; object-fit: contain then letterboxes cleanly
+       instead of cropping. */
+    width: 100%;
+    aspect-ratio: var(--arn, 21 / 9);
+    max-height: clamp(22rem, 46vw, 40rem);
   }
 
   .case__cover-img {
     width: 100%;
-    height: auto;
-    aspect-ratio: 21 / 9;
-    object-fit: cover;
+    height: 100%;
+    object-fit: contain;
     filter: saturate(0.88) brightness(0.9);
   }
 
@@ -247,8 +262,8 @@ const facts = [
       order: -1;
     }
 
-    .case__cover-img {
-      aspect-ratio: 16 / 10;
+    .case__cover {
+      max-height: clamp(18rem, 80vw, 28rem);
     }
   }
 

@@ -6,13 +6,12 @@ export const site = {
   role: 'Software Development Engineer',
   company: 'Amazon',
   location: 'San Diego, CA',
-  education: 'Computer Science — UC Irvine',
-  school: 'Donald Bren School of Information & Computer Sciences',
   email: 'whyttaker@gmail.com',
   phone: '714-913-3626',
   resumePdf: '/resume/Whittaker-Worland-Resume.pdf',
   description:
-    'Software Development Engineer at Amazon building scalable distributed systems and AI-powered tooling for financial infrastructure handling hundreds of millions of daily transactions.',
+    'Focused on delivering results for customers, optimizing systems and solutions to make every experience faster, smarter, and more reliable.',
+  passion: 'As well as a game dev, always looking for new ways to create exciting experiences.',
 } as const;
 
 export const links = [
@@ -39,6 +38,6 @@ export const strata = [
   { id: 'cloud', label: 'Cloud Infrastructure', metric: '$2.76M / yr reduced' },
   { id: 'ai', label: 'AI & LLM', metric: '~95% faster response' },
   { id: 'fullstack', label: 'Full-Stack', metric: 'Epic FHIR · EHR tooling' },
-  { id: 'game', label: 'Game Systems', metric: '1st place — UCI' },
+  { id: 'game', label: 'Game Systems', metric: '1st place · UCI' },
   { id: 'product', label: 'Product', metric: '200+ client teams' },
 ] as const;

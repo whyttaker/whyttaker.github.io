@@ -1,0 +1,72 @@
+---
+title: DUB → ZAZ Migration
+category: professional
+discipline: Infrastructure
+context: Amazon, Seller Partner Services
+tagline: Zero-downtime migration of a 100M+ request/day financial pipeline to a new AWS region
+thesis: Stood up a new high-throughput AWS region for a financial data aggregation pipeline and cut the legacy Dublin region over to it without losing a request.
+outcome: ~$230K/month (~$2.76M/yr) cost reduction, zero downtime, 100% data integrity
+role: Software Development Engineer, Amazon
+cover: ../../assets/projects/dub-zaz-migration.webp
+coverAlt: Icon mark for the DUB to ZAZ region migration
+stack:
+  - AWS CDK
+  - DynamoDB
+  - S3
+  - SNS/SQS
+  - EC2
+  - IAM
+  - CloudWatch
+systems:
+  - Multi-Region Infrastructure
+  - Event-Driven Architecture
+  - IaC
+  - Cost Optimization
+tags:
+  - AWS
+  - IaC
+  - Distributed Systems
+  - Cost Optimization
+order: 1
+---
+
+<section data-block="overview">
+<span class="t-mono">Overview</span>
+## About the Project
+
+On Amazon's Seller Partner Services team, I engineered and launched a new scalable, high-throughput AWS region for a financial data aggregation pipeline processing 100M+ requests a day, then migrated it off the legacy Dublin (DUB) region into the new Zaragoza (ZAZ) region with a zero-downtime cutover and 100% data integrity, coordinating the transition across 200+ downstream client teams who depended on the pipeline staying up through the move.
+</section>
+
+<section data-block="process">
+<span class="t-mono">Design Process</span>
+## Approach
+
+A financial pipeline at this scale can't tolerate a maintenance window: every downstream team consuming it needed the cutover to be invisible. The plan centered on building the new region out fully in parallel first, validating it against production traffic, and only then rerouting live requests, rather than migrating in place and hoping nothing broke along the way.
+
+Coordinating 200+ downstream client teams meant the migration itself had to be treated like a product: a clear timeline, explicit rollback points, and proactive communication so no team was caught off guard by a routing change on their side of the integration.
+</section>
+
+<section data-block="implementation">
+<span class="t-mono">Implementation</span>
+## Technical Architecture
+
+The new region's infrastructure was defined entirely as code with AWS CDK (DynamoDB tables, S3 storage, SNS/SQS for event-driven fan-out, EC2 compute, and CloudWatch for observability), so the environment could be provisioned, backfilled, and torn down deterministically rather than by hand. That same IaC made it possible to stand up the target region well ahead of cutover and keep it in lockstep with the legacy one as data continued to flow.
+
+The cutover itself relied on the pipeline's event-driven architecture: traffic was shifted region by region behind the existing SNS/SQS boundaries, so consumers kept receiving events through the same contracts while the infrastructure underneath them changed.
+</section>
+
+<section data-block="challenges">
+<span class="t-mono">Key Engineering Challenges</span>
+## What Was Hard
+
+The hard constraint was that "zero downtime" and "100% data integrity" both had to be literally true, not directionally true: for a financial pipeline, a dropped or duplicated record during the cutover isn't an acceptable trade-off. That ruled out any migration approach that depended on a brief pause to be safe.
+
+The other constraint was organizational rather than technical: 200+ teams were already integrated against the legacy region. Sequencing the cutover so each of them could validate against the new region on their own timeline, without the whole migration stalling on the slowest team, took as much planning as the infrastructure work itself.
+</section>
+
+<section data-block="takeaways">
+<span class="t-mono">Takeaways</span>
+## What I Learned
+
+This project was a lesson in treating infrastructure migrations as a coordination problem first and an engineering problem second: the CDK stacks and event-driven cutover were straightforward compared to sequencing 200+ dependent teams through a change safely. It also reinforced how much leverage IaC gives you in a migration specifically: being able to stand up, validate, and iterate on the destination environment before a single production request touched it is what made a zero-downtime cutover possible at all.
+</section>

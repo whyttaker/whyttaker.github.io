@@ -4,7 +4,7 @@
 
 export const education = {
   org: 'University of California, Irvine',
-  degree: 'B.S. Computer Science — Minor in Game Design',
+  degree: 'B.S. Computer Science, Minor in Game Design',
   location: 'Irvine, CA',
   courses:
     'Data Structures & Algorithms, OOP, Artificial Intelligence, Game Development, UI Design, Cloud Computing, Prompt Engineering, LLMs, NLP, Human-Computer Interaction',
@@ -48,7 +48,7 @@ export const resumeProjects = [
 ];
 
 export const leadership = [
-  'Team Captain & Scholar-Athlete — led teammates to back-to-back CIF Championships while maintaining academic excellence at a Division I level.',
+  'Team Captain & Scholar-Athlete: led teammates to back-to-back CIF Championships while maintaining academic excellence at a Division I level.',
   'Guided new team members and a summer intern on engineering workflows, reviewing code, clarifying design decisions, and ensuring consistent implementation standards.',
   'Regularly served as project lead and code reviewer across team-based industry projects, ensuring quality and clear communication across contributors.',
   'Experienced making high-stakes decisions under pressure in athletic competition and collaborative development environments.',

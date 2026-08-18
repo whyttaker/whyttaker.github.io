@@ -170,18 +170,35 @@ export interface RainHandle {
   ): void;
 }
 
+/**
+ * A text block the rain has to stay legible behind. Measured fresh every
+ * frame rather than once on resize — the canvas is now a fixed full-viewport
+ * layer, so unlike the old hero-only version, a tracked element's position
+ * relative to it changes on every scroll tick, not just when the window
+ * resizes.
+ */
+interface ClearZone {
+  cx: number;
+  cy: number;
+  rx: number;
+  ry: number;
+  /** The hero's own block keeps the bespoke left-wash treatment below. */
+  isHero: boolean;
+}
+
 export function createRain(
   canvas: HTMLCanvasElement,
   opts: {
     reduced: boolean;
-    clearEl: HTMLElement | null;
+    /** Every text block the rain needs to stay legible behind, page-wide. */
+    clearEls: HTMLElement[];
     /** Cleared every frame; carries the landed name so it never smears. */
     nameCanvas: HTMLCanvasElement | null;
   }
 ): RainHandle {
   const ctx = canvas.getContext('2d', { alpha: true })!;
   const nctx = opts.nameCanvas?.getContext('2d', { alpha: true }) ?? null;
-  const clearEl = opts.clearEl;
+  const clearEls = opts.clearEls;
 
   let W = 0;
   let H = 0;
@@ -192,7 +209,23 @@ export function createRain(
   let noiseByTier: NoiseCol[][] = [];
   let focal: FocalCol[] = [];
 
-  let clearRect: { cx: number; cy: number; rx: number; ry: number } | null = null;
+  let clearZones: ClearZone[] = [];
+
+  /* clearK sits at a constant 0 or 1 for the entire run except a ~1s window
+     during the intro handoff, and the hero wash only depends on the canvas
+     size — so it is almost always identical frame to frame. Rebuilding it 60
+     times a second forever, for a value that changes maybe once, was pure
+     waste; caching by the inputs that actually vary means the rebuild only
+     happens on the frames where the picture really changes. */
+  let clearGradCache: { clearK: number; w: number; h: number; wash: CanvasGradient; top: CanvasGradient } | null =
+    null;
+
+  /* Every other zone's dark pool reuses one gradient regardless of position:
+     it is authored as a unit circle at the origin and the ellipse's actual
+     place and size come entirely from a translate+scale at fill time, so the
+     gradient object itself never depends on a zone's (moving) coordinates
+     and only ever needs to be built once. */
+  let poolGrad: CanvasGradient | null = null;
 
   let motif: ActiveMotif | null = null;
   let motifCooldown = 2.5;
@@ -313,19 +346,45 @@ export function createRain(
     ctx.fillRect(0, 0, W, H);
   }
 
-  function measureClear() {
-    if (!clearEl) {
-      clearRect = null;
-      return;
-    }
+  function measureClearZones() {
+    clearZones = [];
+    if (!clearEls.length) return;
     const c = canvas.getBoundingClientRect();
-    const t = clearEl.getBoundingClientRect();
-    clearRect = {
-      cx: t.left - c.left + t.width / 2,
-      cy: t.top - c.top + t.height / 2,
-      rx: t.width * 0.78,
-      ry: t.height * 0.95,
-    };
+    for (const el of clearEls) {
+      const t = el.getBoundingClientRect();
+      // Skip anything well outside the viewport — no need to protect text
+      // nobody can see, and it keeps the per-frame zone list short while
+      // scrolling through a long page.
+      if (t.width === 0 || t.bottom < -200 || t.top - c.top > H + 200) continue;
+      clearZones.push({
+        cx: t.left - c.left + t.width / 2,
+        cy: t.top - c.top + t.height / 2,
+        rx: t.width * 0.78,
+        ry: t.height * 0.95,
+        isHero: el.dataset.rainClear === 'hero',
+      });
+    }
+  }
+
+  /**
+   * How strongly (x,y) sits inside a protected block: 0 outside every zone,
+   * rising to 1 at a zone's centre. Used to thin the falling field out as it
+   * approaches a block, rather than leaving it full density under a
+   * translucent wash — a dark overlay on top of a still-busy field reads as
+   * busy regardless of how dark the overlay is.
+   */
+  function zoneCoverage(x: number, y: number): number {
+    if (clearK <= 0.001 || !clearZones.length) return 0;
+    let max = 0;
+    for (const z of clearZones) {
+      const dx = (x - z.cx) / z.rx;
+      const dy = (y - z.cy) / z.ry;
+      const d2 = dx * dx + dy * dy;
+      if (d2 >= 1) continue;
+      const k = 1 - Math.sqrt(d2);
+      if (k > max) max = k;
+    }
+    return max * clearK;
   }
 
   // ------------------------------------------------------------- reveal
@@ -559,51 +618,79 @@ export function createRain(
   // ---------------------------------------------------------------- draw
 
   /**
-   * Dims the rain behind the display type. Without it the name sits on a field
-   * of moving characters and stops being readable, which would fail the one
-   * thing the hero actually has to do.
+   * Dims the rain behind every tracked text block. Without it, running text
+   * anywhere down the page sits on a field of moving characters and stops
+   * being readable — the same problem the hero always had, now everywhere
+   * the rain shows through rather than just behind the name.
    */
   function drawClearZone() {
-    if (clearK <= 0.001) return;
-    // A left-weighted wash rather than a circle cut out of the rain. A radial
-    // hole behind the type read as a black blob — an obvious mask. Dimming the
-    // whole left side instead reads as composition: quiet where the type is,
-    // active where it is not, which is the same left/right balance the rest of
-    // the page uses.
-    const wash = ctx.createLinearGradient(0, 0, W * 0.72, 0);
-    wash.addColorStop(0, `rgba(0,0,0,${0.92 * clearK})`);
-    wash.addColorStop(0.45, `rgba(0,0,0,${0.72 * clearK})`);
-    wash.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = wash;
-    ctx.fillRect(0, 0, W * 0.72, H);
+    if (clearK <= 0.001 || !clearZones.length) return;
 
-    // The nav sits top-right, over the busiest part of the field.
-    const top = ctx.createLinearGradient(0, 0, 0, 130);
-    top.addColorStop(0, `rgba(0,0,0,${0.8 * clearK})`);
-    top.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = top;
-    ctx.fillRect(0, 0, W, 130);
+    // The hero keeps its bespoke composition: a left-weighted wash rather
+    // than a circle cut out of the rain (a radial hole behind the type read
+    // as a black blob — an obvious mask), plus a strip behind the nav. That
+    // treatment only makes sense for the hero's own upper-left layout, so it
+    // stays specific to that one zone rather than generalizing to every
+    // block — it naturally stops being drawn once the hero scrolls out of
+    // measureClearZones's tracked range.
+    const hero = clearZones.find((z) => z.isHero);
+    if (hero) {
+      let wash: CanvasGradient;
+      let top: CanvasGradient;
+      if (clearGradCache && clearGradCache.clearK === clearK && clearGradCache.w === W && clearGradCache.h === H) {
+        ({ wash, top } = clearGradCache);
+      } else {
+        wash = ctx.createLinearGradient(0, 0, W * 0.72, 0);
+        wash.addColorStop(0, `rgba(0,0,0,${0.92 * clearK})`);
+        wash.addColorStop(0.45, `rgba(0,0,0,${0.72 * clearK})`);
+        wash.addColorStop(1, 'rgba(0,0,0,0)');
 
-    // A last soft pool directly behind the name, so a bright column passing
-    // through can never break the read.
-    if (!clearRect) return;
-    const { cx, cy, rx, ry } = clearRect;
-    const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, 1);
-    g.addColorStop(0, `rgba(0,0,0,${0.7 * clearK})`);
-    g.addColorStop(1, 'rgba(0,0,0,0)');
+        // The nav sits top-right, over the busiest part of the field.
+        top = ctx.createLinearGradient(0, 0, 0, 130);
+        top.addColorStop(0, `rgba(0,0,0,${0.8 * clearK})`);
+        top.addColorStop(1, 'rgba(0,0,0,0)');
 
-    ctx.save();
-    ctx.translate(cx, cy);
-    ctx.scale(rx, ry);
-    ctx.translate(-cx, -cy);
-    ctx.fillStyle = g;
-    ctx.beginPath();
-    ctx.arc(cx, cy, 1, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
+        clearGradCache = { clearK, w: W, h: H, wash, top };
+      }
+      ctx.fillStyle = wash;
+      ctx.fillRect(0, 0, W * 0.72, H);
+
+      ctx.fillStyle = top;
+      ctx.fillRect(0, 0, W, 130);
+    }
+
+    // A soft pool behind every tracked block, so a bright column passing
+    // through can never break the read — the hero's is layered on top of its
+    // wash above, everything else relies on the pool alone.
+    if (!poolGrad) {
+      poolGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, 1);
+      poolGrad.addColorStop(0, 'rgba(0,0,0,0.7)');
+      poolGrad.addColorStop(1, 'rgba(0,0,0,0)');
+    }
+
+    ctx.globalAlpha = clearK;
+    ctx.fillStyle = poolGrad;
+    for (const z of clearZones) {
+      ctx.save();
+      ctx.translate(z.cx, z.cy);
+      ctx.scale(z.rx, z.ry);
+      ctx.beginPath();
+      ctx.arc(0, 0, 1, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+    ctx.globalAlpha = 1;
   }
 
   function drawFrame(dt: number) {
+    // Every tracked block's screen position moves on every scroll tick now
+    // that the canvas is a fixed full-viewport layer, so this has to be
+    // fresh every frame rather than measured once on resize — and it has to
+    // happen before the draw loops below, which consult it to thin the field
+    // out approaching a protected block rather than just relying on the dark
+    // pool drawn over it afterward.
+    measureClearZones();
+
     // Trails are produced entirely by this rect. A faster handoff fades less
     // per frame, leaving longer streaks — which is what sells "falling into
     // the page" rather than simply speeding up.
@@ -636,6 +723,18 @@ export function createRain(
         }
         if (y < -tier.cellH) continue;
         if (Math.random() < 0.4) c.glyph = randomGlyph();
+
+        const cover = zoneCoverage(c.x, y);
+        if (cover > 0) {
+          // Thinned rather than just dimmed: most of what would have landed
+          // here simply doesn't draw, so the field looks sparser approaching
+          // a protected block instead of merely darker.
+          if (Math.random() < cover * 0.85) continue;
+          ctx.globalAlpha = tier.alpha * (1 - cover * 0.6);
+          ctx.fillText(c.glyph, c.x, y);
+          ctx.globalAlpha = tier.alpha;
+          continue;
+        }
         ctx.fillText(c.glyph, c.x, y);
       }
     }
@@ -700,17 +799,25 @@ export function createRain(
         continue;
       }
 
+      // Landed phrase/name letters above are exempt from thinning — they are
+      // the one deliberate foreground moment and should never partially drop
+      // out — but plain noise and motif/decoder reveals thin out approaching
+      // a protected block same as everything else.
+      const cover = zoneCoverage(x, y);
+      if (cover > 0 && Math.random() < cover * 0.85) continue;
+      const dim = cover > 0 ? 1 - cover * 0.6 : 1;
+
       const rev = revealAt(c.col, row);
       if (rev) {
         // Passing through a motif or the decoder: draw its character instead
         // of noise. This is how the picture gets painted.
-        ctx.globalAlpha = 0.5 + 0.5 * rev.k;
+        ctx.globalAlpha = (0.5 + 0.5 * rev.k) * dim;
         ctx.fillText(rev.char, x, y);
         continue;
       }
 
       if (Math.random() < 0.35) c.glyph = randomGlyph();
-      ctx.globalAlpha = 0.62;
+      ctx.globalAlpha = 0.62 * dim;
       ctx.fillText(c.glyph, x, y);
     }
 
@@ -1023,7 +1130,6 @@ export function createRain(
 
   const onResize = () => {
     layout();
-    measureClear();
     if (opts.reduced) renderStill();
   };
 
@@ -1049,7 +1155,6 @@ export function createRain(
   };
 
   layout();
-  measureClear();
 
   if (opts.reduced) {
     renderStill();

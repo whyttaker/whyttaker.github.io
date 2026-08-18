@@ -7,7 +7,7 @@ import { education, skills, resumeProjects, leadership } from '../data/resume';
 
 <Base
   title="Resume"
-  description={`Resume for ${site.name} — ${site.role} at ${site.company}.`}
+  description={`Resume for ${site.name}, ${site.role} at ${site.company}.`}
 >
   <article class="resume">
     <div class="shell">
@@ -76,7 +76,7 @@ import { education, skills, resumeProjects, leadership } from '../data/resume';
               <div class="job">
                 <div class="row">
                   <p class="row__org">
-                    {role.org} — {role.role}
+                    {role.org} · {role.role}
                   </p>
                   <span class="row__meta t-mono">
                     {role.location} · {role.period}
