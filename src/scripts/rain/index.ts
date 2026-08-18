@@ -26,19 +26,59 @@ function measureNameTargets(canvas: HTMLCanvasElement) {
     document.querySelectorAll<HTMLElement>('[data-name-line]')
   );
   const c = canvas.getBoundingClientRect();
+  const nameEl = document.querySelector<HTMLElement>('.hero__name');
+  if (!nameEl || !lines.length) return [];
+
+  const cs = getComputedStyle(nameEl);
+  const probe = document.createElement('canvas').getContext('2d')!;
+  probe.textBaseline = 'alphabetic';
+
+  /*
+    Baselines are aligned from real font metrics rather than a guessed cap
+    offset. Eyeballing a fraction of the size put the glyphs about 12px high
+    of the type they land on, and the error scales with viewport width.
+
+    Monospace cannot match both the width and the cap height of a proportional
+    face — its advance is far wider — so width wins: the block occupies the
+    same footprint, and the crossfade reads as the letterforms changing in
+    place rather than the name jumping size.
+  */
+  const measureAscent = (font: string) => {
+    probe.font = font;
+    const m = probe.measureText('H');
+    return m.fontBoundingBoxAscent ?? 0;
+  };
+
+  const domFont = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+  const domAscent = measureAscent(domFont);
+  const domDescent = (() => {
+    probe.font = domFont;
+    return probe.measureText('H').fontBoundingBoxDescent ?? 0;
+  })();
+  const lineHeight = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize);
+  const halfLeading = (lineHeight - (domAscent + domDescent)) / 2;
+
+  // One size for both lines: monospace has a single advance, so the size is
+  // shared and only the tracking differs per line.
+  const sizes = lines.map((el) => {
+    const r = el.getBoundingClientRect();
+    return r.width / Math.max(1, el.textContent!.trim().length) / 0.6;
+  });
+  const size = Math.min(...sizes);
+  const monoAscent = measureAscent(
+    `600 ${size}px "JetBrains Mono", ui-monospace, monospace`
+  );
 
   return lines.map((el) => {
     const r = el.getBoundingClientRect();
     const text = el.textContent?.trim() ?? '';
-    const pitch = r.width / Math.max(1, text.length);
-    // Mono advance is about 0.6em, so this is the size that spans the same
-    // width with the same number of characters.
-    const size = pitch / 0.6;
+    const baseline = r.top - c.top + halfLeading + domAscent;
     return {
       text,
       x: r.left - c.left,
-      y: r.top - c.top - size * 0.12,
-      pitch,
+      // Canvas draws with textBaseline 'top', i.e. from the em-box top.
+      y: baseline - monoAscent,
+      pitch: r.width / Math.max(1, text.length),
       size,
     };
   });
@@ -52,7 +92,8 @@ export function initRain(): void {
   const clearEl = document.querySelector<HTMLElement>('[data-rain-clear]');
   const reduced = window.matchMedia(REDUCED).matches;
 
-  const rain = createRain(canvas, { reduced, clearEl });
+  const nameCanvas = document.querySelector<HTMLCanvasElement>('[data-rain-name]');
+  const rain = createRain(canvas, { reduced, clearEl, nameCanvas });
   canvas.dataset.ready = '';
 
   if (reduced) {

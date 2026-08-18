@@ -17,6 +17,11 @@ import { site } from '../../data/site';
 
 <section class="hero" id="hero">
   <canvas class="rain" data-rain aria-hidden="true"></canvas>
+  {/* The landed name draws here instead of into the storm. The storm canvas
+      builds its trails by never clearing, which turns any horizontal movement
+      into a smear — fine for falling rain, wrong for letters travelling into
+      position. This layer is cleared every frame, so the name stays crisp. */}
+  <canvas class="rain rain--name" data-rain-name aria-hidden="true"></canvas>
 
   <div class="shell hero__content">
     {/* The rain dims behind this block so the display type stays crisp. */}
@@ -76,6 +81,14 @@ import { site } from '../../data/site';
   .rain[data-ready] {
     /* --handoff is driven by the scroll store as the hero leaves. */
     opacity: var(--handoff, 1);
+  }
+
+  /* Above the storm and above the dimming wash, which sweeps the left of the
+     frame — exactly where the name is heading. */
+  .rain--name {
+    z-index: 2;
+    opacity: 1;
+    pointer-events: none;
   }
 
   /* --- Intro -------------------------------------------------------------

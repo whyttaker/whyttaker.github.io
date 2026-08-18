@@ -98,10 +98,15 @@ interface FocalCol {
 */
 interface Letter {
   ch: string;
-  x: number;
-  /** Final size once landed. */
-  size: number;
-  /** Rows, float. */
+  /** Where it lands out of the rain: one centred line, mid screen. */
+  cx: number;
+  cy: number;
+  csize: number;
+  /** Where it travels to: its slot in the stacked hero name. */
+  hx: number;
+  hy: number;
+  hsize: number;
+  /** Fall, in rows. */
   head: number;
   start: number;
   target: number;
@@ -157,9 +162,15 @@ export interface RainHandle {
 
 export function createRain(
   canvas: HTMLCanvasElement,
-  opts: { reduced: boolean; clearEl: HTMLElement | null }
+  opts: {
+    reduced: boolean;
+    clearEl: HTMLElement | null;
+    /** Cleared every frame; carries the landed name so it never smears. */
+    nameCanvas: HTMLCanvasElement | null;
+  }
 ): RainHandle {
   const ctx = canvas.getContext('2d', { alpha: true })!;
+  const nctx = opts.nameCanvas?.getContext('2d', { alpha: true }) ?? null;
   const clearEl = opts.clearEl;
 
   let W = 0;
@@ -187,6 +198,8 @@ export function createRain(
   let phraseScale = 1;
   let phraseCols: FocalCol[] = [];
   let letters: Letter[] = [];
+  /** 0 = centred line, 1 = in the hero's stacked position. */
+  let moveP = 0;
   /** Seconds; the intro lengthens this so the fade matches the DOM handover. */
   let phraseFadeDur = 0.7;
   let phraseTimer = 3;
@@ -201,12 +214,15 @@ export function createRain(
     wash in at the end — during the storm there is no clear zone at all,
     because there is nothing to protect yet.
   */
-  const INTRO_PHRASE_AT = 0.45;
-  /** How long the letters take to fall into place. */
-  const INTRO_CONVERGE = 1.75;
-  /** Glyphs land at ~2.2s and hold before the handover. */
-  const INTRO_MORPH_AT = 2.75;
-  const INTRO_MORPH_MS = 780;
+  const INTRO_PHRASE_AT = 0.35;
+  /** Fall, landing as one centred line at ~1.85s. */
+  const INTRO_CONVERGE = 1.5;
+  /** Held centred, then the letters travel to their hero slots. */
+  const INTRO_MOVE_AT = 2.55;
+  const INTRO_MOVE_DUR = 1.05;
+  /** The real type comes up just as they arrive. */
+  const INTRO_MORPH_AT = 3.55;
+  const INTRO_MORPH_MS = 500;
   const INTRO_END_AT = 4.4;
   let introT = -1;
   let introPhraseStarted = false;
@@ -242,6 +258,13 @@ export function createRain(
     canvas.height = Math.round(H * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.textBaseline = 'top';
+
+    if (nctx && opts.nameCanvas) {
+      opts.nameCanvas.width = Math.round(W * dpr);
+      opts.nameCanvas.height = Math.round(H * dpr);
+      nctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      nctx.textBaseline = 'top';
+    }
 
     rows = Math.ceil(H / FOCAL_CELL_H) + 2;
     focalCols = Math.ceil(W / FOCAL_CELL_W);
@@ -479,6 +502,12 @@ export function createRain(
     something that surfaced and was gone.
   */
   function updatePhrase(dt: number) {
+    /* During the intro this machine only detects the landing. Everything after
+       that — the hold, the travel, the handover — is on the intro's clock, and
+       letting the generic 0.7s flash/fade run alongside it faded the name out
+       at 3.0s, before it had finished moving. */
+    if (introT >= 0 && phraseState !== 'converging') return;
+
     if (phraseState === 'idle') {
       phraseTimer -= dt;
       if (phraseTimer <= 0) startPhrase();
@@ -569,7 +598,7 @@ export function createRain(
     // The storm drives everything faster until the reveal, then eases back to
     // the resting speed as the wash comes in.
     const storm =
-      introT < 0 ? 0 : 1 - Math.min(1, Math.max(0, (introT - INTRO_MORPH_AT) / 1.1));
+      introT < 0 ? 0 : 1 - Math.min(1, Math.max(0, (introT - INTRO_MOVE_AT) / 1.1));
     const boost = 1 + handoff * 4 + storm * 0.75;
 
     // --- noise, one font assignment per tier -------------------------
@@ -669,10 +698,12 @@ export function createRain(
       ctx.fillText(c.glyph, x, y);
     }
 
-    drawLetters(dt);
-
     ctx.globalAlpha = 1;
     drawClearZone();
+
+    // After the wash, never before: the wash darkens the left of the frame,
+    // which is precisely where the name is heading.
+    drawLetters(dt);
   }
 
   /**
@@ -745,28 +776,55 @@ export function createRain(
   function placeNameTargets(duration: number) {
     phraseCols = [];
     letters = [];
+    moveP = 0;
 
-    for (const t of introGetTargets?.() ?? []) {
-      const text = t.text.toUpperCase();
-      for (let i = 0; i < text.length; i++) {
-        const ch = text[i];
-        if (ch === ' ') continue;
-        // Each letter starts above the frame at its own height and gets the
-        // speed that lands it on the shared row at the shared moment, so the
-        // descent looks unrelated right up until it isn't.
-        const head = -(2 + Math.random() * 30);
-        const target = t.y / FOCAL_CELL_H;
-        letters.push({
-          ch,
-          x: t.x + i * t.pitch,
-          size: t.size,
-          head,
-          start: head,
-          target,
-          speed: (target - head) / duration,
-          holding: false,
-        });
+    const targets = introGetTargets?.() ?? [];
+    if (!targets.length) return;
+
+    /*
+      Two layouts per letter.
+
+      It falls out of the rain into a single centred line — the shape the intro
+      had before, readable on its own — and then travels to its slot in the
+      stacked hero name. Same glyph, same face, no crossfade in between: the
+      letters simply move and scale. Only at the very end does the real display
+      type come up underneath, and by then the mono is sitting on its position
+      and size exactly.
+    */
+    const nameSize = targets[0].size;
+    const joined = targets.map((t) => t.text).join(' ');
+    const csize = Math.max(22, Math.min(46, W / 34));
+    // Tracked out: a name reads better with air than set solid.
+    const cpitch = csize * 0.62 * 1.5;
+    const cx0 = (W - joined.length * cpitch) / 2;
+    const cy = H * 0.44;
+    const targetRow = cy / FOCAL_CELL_H;
+
+    let gi = 0;
+    for (const t of targets) {
+      for (let i = 0; i < t.text.length; i++) {
+        const ch = t.text[i];
+        if (ch !== ' ') {
+          const head = -(2 + Math.random() * 30);
+          letters.push({
+            ch,
+            cx: cx0 + gi * cpitch,
+            cy,
+            csize,
+            hx: t.x + i * t.pitch,
+            hy: t.y,
+            hsize: nameSize,
+            head,
+            start: head,
+            target: targetRow,
+            speed: (targetRow - head) / duration,
+            holding: false,
+          });
+        }
+        gi++;
       }
+      // The space between the two words.
+      gi++;
     }
 
     if (!letters.length) return;
@@ -775,8 +833,17 @@ export function createRain(
     phraseGuard = duration + 3;
   }
 
+  /** Ease in and out, so the travel starts and settles rather than sliding. */
+  const easeInOut = (t: number) =>
+    t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
   function drawLetters(dt: number) {
+    // The clean layer is wiped every frame whether or not there is a name on
+    // it, so nothing is ever left behind when the intro ends.
+    if (nctx) nctx.clearRect(0, 0, W, H);
     if (!letters.length) return;
+
+    const e = easeInOut(moveP);
 
     for (const l of letters) {
       if (!l.holding) {
@@ -785,39 +852,37 @@ export function createRain(
           l.head = l.target;
           l.holding = true;
         }
-      }
 
-      const y = l.head * FOCAL_CELL_H;
-
-      if (l.holding) {
-        ctx.font = `600 ${l.size}px "JetBrains Mono", ui-monospace, monospace`;
-        ctx.globalAlpha = phraseAlpha;
-        ctx.fillStyle = phraseState === 'flash' ? '#ffffff' : `rgb(${BONE})`;
-        ctx.fillText(l.ch, l.x, y);
-        ctx.globalAlpha = phraseAlpha * 0.3;
-        ctx.fillStyle = `rgb(${RIM})`;
-        ctx.fillText(l.ch, l.x, y);
+        /* Still falling, so it belongs to the storm: drawn into the trailing
+           canvas at the size it will land at, scrambling like everything
+           else around it. */
+        ctx.font = `600 ${l.csize}px "JetBrains Mono", ui-monospace, monospace`;
+        ctx.globalAlpha =
+          0.4 +
+          0.45 *
+            Math.min(1, Math.max(0, (l.head - l.start) / (l.target - l.start || 1)));
+        ctx.fillStyle = `rgb(${BONE})`;
+        ctx.fillText(randomGlyph(), l.cx, l.head * FOCAL_CELL_H);
         continue;
       }
 
-      /* On the way down a letter is indistinguishable from the storm: focal
-         size, scrambling, dim. It rushes to full size only over the last
-         third of its fall. Drawn at final size the whole way, the letters
-         read as bright blobs smearing down the screen and give the surprise
-         away long before they land. */
-      const p = Math.min(
-        1,
-        Math.max(0, (l.head - l.start) / (l.target - l.start || 1))
-      );
-      const grow = Math.max(0, (p - 0.66) / 0.34);
-      ctx.font = `600 ${FOCAL_SIZE + (l.size - FOCAL_SIZE) * grow * grow}px "JetBrains Mono", ui-monospace, monospace`;
-      ctx.globalAlpha = 0.4 + 0.45 * p;
-      ctx.fillStyle = `rgb(${BONE})`;
-      ctx.fillText(grow > 0.55 ? l.ch : randomGlyph(), l.x, y);
+      /* Landed. From here it lives on the clean layer and travels to its slot
+         in the stacked hero name — same face, same glyph, moving and scaling,
+         with no trail behind it. */
+      const g = nctx ?? ctx;
+      const x = l.cx + (l.hx - l.cx) * e;
+      const y = l.cy + (l.hy - l.cy) * e;
+      const size = l.csize + (l.hsize - l.csize) * e;
+
+      g.font = `600 ${size}px "JetBrains Mono", ui-monospace, monospace`;
+      g.globalAlpha = phraseAlpha;
+      g.fillStyle = phraseState === 'flash' ? '#ffffff' : `rgb(${BONE})`;
+      g.fillText(l.ch, x, y);
     }
 
     ctx.globalAlpha = 1;
     ctx.font = `500 ${FOCAL_SIZE}px "JetBrains Mono", ui-monospace, monospace`;
+    if (nctx) nctx.globalAlpha = 1;
   }
 
   function updateIntro(dt: number) {
@@ -835,20 +900,34 @@ export function createRain(
       position and at the same size, so it reads as the monospace setting into
       Archivo rather than as one element replacing another.
     */
+    // Travel from the centred line into the stacked hero position.
+    moveP = Math.min(1, Math.max(0, (introT - INTRO_MOVE_AT) / INTRO_MOVE_DUR));
+
+    /*
+      The handover. The mono is already sitting on the display type's exact
+      position and size by now, so fading one out as the other comes up reads
+      as the letterforms resolving rather than as a swap.
+    */
     if (!introRevealed && introT >= INTRO_MORPH_AT) {
       introRevealed = true;
-      phraseFadeDur = INTRO_MORPH_MS / 1000;
       phraseState = 'fading';
-      phraseGuard = phraseFadeDur;
       onIntroReveal?.();
     }
 
+    // The intro owns the name's opacity outright, so there is no second
+    // schedule that can fade it early.
+    phraseAlpha =
+      introT < INTRO_MORPH_AT
+        ? 1
+        : Math.max(0, 1 - (introT - INTRO_MORPH_AT) / (INTRO_MORPH_MS / 1000));
+
     clearK =
-      introT < INTRO_MORPH_AT ? 0 : Math.min(1, (introT - INTRO_MORPH_AT) / 1.1);
+      introT < INTRO_MOVE_AT ? 0 : Math.min(1, (introT - INTRO_MOVE_AT) / 1.0);
 
     if (introT >= INTRO_END_AT) {
       introT = -1;
       clearK = 1;
+      releasePhrase();
       onIntroDone?.();
       onIntroDone = null;
       onIntroReveal = null;
