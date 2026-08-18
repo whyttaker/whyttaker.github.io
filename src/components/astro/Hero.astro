@@ -92,30 +92,41 @@ import { site } from '../../data/site';
   }
 
   /* --- Intro -------------------------------------------------------------
-     During the storm the hero content is held back rather than removed. It
-     stays in the layout and stays painted — hiding it outright would delay the
-     largest contentful paint until the animation finished, and would mean a
-     failed script leaves nothing on screen. The rain spells the name out of
-     itself, then this rises to meet it. */
-  :global(html[data-intro]) .hero__content,
+     The held-back state is applied to the individual children, never to
+     .hero__content itself.
+
+     That container wraps the name, and animating its opacity and transform
+     meant the name inherited both: it faded up from 4% and slid 0.6rem
+     upwards after the swap, which read as the name fading in out of black and
+     then bouncing into place. Its own opacity being instant made no
+     difference — a parent's opacity multiplies through.
+
+     Content stays painted rather than hidden, so the largest contentful paint
+     is not deferred until the animation ends and a failed script still leaves
+     a readable hero. */
+  :global(html[data-intro]) .hero__eyebrow,
+  :global(html[data-intro]) .hero__sub,
+  :global(html[data-intro]) .hero__hint,
   :global(html[data-intro]) .hero__scroll {
     opacity: 0.04;
     transform: translateY(0.6rem);
   }
 
-  :global(html[data-intro][data-intro-reveal]) .hero__content,
+  :global(html[data-intro][data-intro-reveal]) .hero__eyebrow,
+  :global(html[data-intro][data-intro-reveal]) .hero__sub,
+  :global(html[data-intro][data-intro-reveal]) .hero__hint,
   :global(html[data-intro][data-intro-reveal]) .hero__scroll {
     opacity: 1;
     transform: none;
     transition:
-      opacity 1000ms var(--e-out),
-      transform 1200ms var(--e-out);
+      opacity 900ms var(--e-out) 200ms,
+      transform 1100ms var(--e-out) 200ms;
   }
 
-  /* The name switches on instantly — no fade, no scale. The canvas glyphs
-     sitting on top of it are the same face at the same size and baseline, so
-     the swap is one set of identical pixels replacing another. Any transition
-     here reintroduces the double image this was meant to remove. */
+  /* The name switches on and does not move. The canvas glyphs sitting on it
+     are the same face at the same size on the same baseline, so the swap is
+     one set of identical pixels replacing another. Any transition or offset
+     here reintroduces exactly the artefact this removes. */
   :global(html[data-intro]) .hero__name {
     opacity: 0;
   }
@@ -123,12 +134,6 @@ import { site } from '../../data/site';
   :global(html[data-intro][data-intro-reveal]) .hero__name {
     opacity: 1;
     transition: none;
-  }
-
-  :global(html[data-intro][data-intro-reveal]) .hero__eyebrow,
-  :global(html[data-intro][data-intro-reveal]) .hero__sub,
-  :global(html[data-intro][data-intro-reveal]) .hero__hint {
-    transition-delay: 260ms;
   }
 
   /* --- Content ---------------------------------------------------------- */

@@ -102,6 +102,8 @@ interface FocalCol {
 */
 interface Letter {
   ch: string;
+  /** The display face, used once it has landed. */
+  font: string;
   /** Where it lands out of the rain: one centred line, mid screen. */
   cx: number;
   cy: number;
@@ -118,17 +120,21 @@ interface Letter {
   holding: boolean;
 }
 
-/** One line of the hero name, measured from the DOM it will morph into. */
+/** One line of the hero name, measured from the DOM it will become. */
 export interface NameTarget {
   text: string;
   /** Left edge, canvas px. */
   x: number;
-  /** Cap top, canvas px. */
+  /** Alphabetic baseline, canvas px. */
   y: number;
-  /** Distance between character origins, canvas px. */
-  pitch: number;
+  /** Per-character offsets from x — measured, so any face works. */
+  offsets: number[];
   /** Glyph size, canvas px. */
   size: number;
+  /** The exact CSS font shorthand the display element resolves to. */
+  font: string;
+  /** CSS letter-spacing in px; canvas does not apply it on its own. */
+  letterSpacing: number;
 }
 
 interface ActiveMotif {
@@ -202,6 +208,8 @@ export function createRain(
   let phraseScale = 1;
   let phraseCols: FocalCol[] = [];
   let letters: Letter[] = [];
+  /** Kept so the arrived name can be drawn as whole lines, not per letter. */
+  let nameLines: NameTarget[] = [];
   /** 0 = centred line, 1 = in the hero's stacked position. */
   let moveP = 0;
   /** Seconds; the intro lengthens this so the fade matches the DOM handover. */
@@ -224,10 +232,13 @@ export function createRain(
   /** Held centred, then the letters travel to their hero slots. */
   const INTRO_MOVE_AT = 2.55;
   const INTRO_MOVE_DUR = 1.05;
-  /** The real type comes up just as they arrive. */
-  const INTRO_MORPH_AT = 3.55;
+  /* The handover must come AFTER the travel finishes, not during it. The
+     letters arrive at MOVE_AT + MOVE_DUR = 3.60s; handing over at 3.55s
+     swapped in the real element while they were still about 5% short, and
+     that last 5% was the shift you could see at the end of the animation. */
+  const INTRO_MORPH_AT = 3.72;
   const INTRO_MORPH_MS = 500;
-  const INTRO_END_AT = 4.4;
+  const INTRO_END_AT = 4.6;
   let introT = -1;
   let introPhraseStarted = false;
   let introRevealed = false;
@@ -490,6 +501,7 @@ export function createRain(
     }
     letters = [];
     phraseCols = [];
+    nameLines = [];
     phraseState = 'idle';
     phraseAlpha = 1;
     phraseScale = 1;
@@ -784,6 +796,7 @@ export function createRain(
 
     const targets = introGetTargets?.() ?? [];
     if (!targets.length) return;
+    nameLines = targets;
 
     /*
       Two layouts per letter.
@@ -796,11 +809,27 @@ export function createRain(
       and size exactly.
     */
     const nameSize = targets[0].size;
+    /*
+      The centred line is typeset in the display face at its own natural
+      advances, not stepped along a uniform pitch. A fixed pitch is only right
+      for a monospaced face; against a proportional one it opened visible gaps
+      between letters and a hole where the space falls.
+    */
     const joined = targets.map((t) => t.text).join(' ');
     const csize = Math.max(22, Math.min(46, W / 34));
-    // Tracked out: a name reads better with air than set solid.
-    const cpitch = csize * 0.62 * 1.5;
-    const cx0 = (W - joined.length * cpitch) / 2;
+    const cfont = targets[0].font.replace(/\b[\d.]+px\b/, `${csize}px`);
+    const cls = targets[0].letterSpacing * (csize / targets[0].size);
+
+    ctx.font = cfont;
+    setLetterSpacing(ctx, cls);
+    const coffsets: number[] = [];
+    for (let i = 0; i < joined.length; i++) {
+      coffsets.push(ctx.measureText(joined.slice(0, i)).width + i * cls);
+    }
+    const cwidth = ctx.measureText(joined).width + joined.length * cls;
+    setLetterSpacing(ctx, 0);
+
+    const cx0 = (W - cwidth) / 2;
     const cy = H * 0.44;
     const targetRow = cy / FOCAL_CELL_H;
 
@@ -812,12 +841,13 @@ export function createRain(
           const head = -(2 + Math.random() * 30);
           letters.push({
             ch,
-            cx: cx0 + gi * cpitch,
+            cx: cx0 + coffsets[gi],
             cy,
             csize,
-            hx: t.x + i * t.pitch,
+            hx: t.x + t.offsets[i],
             hy: t.y,
             hsize: nameSize,
+            font: t.font,
             head,
             start: head,
             target: targetRow,
@@ -837,6 +867,17 @@ export function createRain(
     phraseGuard = duration + 3;
   }
 
+  /** Canvas letterSpacing is recent; returns false where it is unsupported. */
+  const setLetterSpacing = (g: CanvasRenderingContext2D, px: number) => {
+    if (!('letterSpacing' in g)) return false;
+    (g as unknown as { letterSpacing: string }).letterSpacing = `${px}px`;
+    return true;
+  };
+
+  /** Rewrites the measured font shorthand at an arbitrary size. */
+  const scaledFont = (l: Letter, size: number) =>
+    l.font.replace(/\b[\d.]+px\b/, `${size}px`);
+
   /** Ease in and out, so the travel starts and settles rather than sliding. */
   const easeInOut = (t: number) =>
     t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
@@ -847,7 +888,40 @@ export function createRain(
     if (nctx) nctx.clearRect(0, 0, W, H);
     if (!letters.length) return;
 
+    // Letters are positioned from their baseline; the rain is not.
+    ctx.textBaseline = 'alphabetic';
+    if (nctx) nctx.textBaseline = 'alphabetic';
+
     const e = easeInOut(moveP);
+
+    /*
+      Once arrived, the name is drawn as whole strings rather than letter by
+      letter. Placing each glyph at its own measured offset is correct to
+      within a pixel, but the browser accumulates subpixel positions slightly
+      differently, and that residual drift is visible the instant the real
+      element takes over. Handing the final frame to the same call the browser
+      makes removes it by construction.
+    */
+    if (moveP >= 0.999 && nctx) {
+      for (const t of nameLines) {
+        nctx.font = t.font;
+        nctx.globalAlpha = phraseAlpha;
+        nctx.fillStyle = `rgb(${BONE})`;
+        if (setLetterSpacing(nctx, t.letterSpacing)) {
+          nctx.fillText(t.text, t.x, t.y);
+          setLetterSpacing(nctx, 0);
+        } else {
+          // No canvas letterSpacing support: fall back to the measured
+          // per-letter offsets, which already include the tracking.
+          for (let i = 0; i < t.text.length; i++) {
+            nctx.fillText(t.text[i], t.x + t.offsets[i], t.y);
+          }
+        }
+      }
+      nctx.globalAlpha = 1;
+      ctx.textBaseline = 'top';
+      return;
+    }
 
     for (const l of letters) {
       if (!l.holding) {
@@ -878,7 +952,11 @@ export function createRain(
       const y = l.cy + (l.hy - l.cy) * e;
       const size = l.csize + (l.hsize - l.csize) * e;
 
-      g.font = `600 ${size}px ${MONO}`;
+      /* Interpolating between two faces is not possible, so the letter
+         adopts the display face as soon as it lands and keeps it for the
+         whole travel. It is only ever seen at rest or moving, never mid
+         glyph-substitution. */
+      g.font = e > 0 || phraseState !== 'converging' ? scaledFont(l, size) : `600 ${size}px ${MONO}`;
       g.globalAlpha = phraseAlpha;
       g.fillStyle = phraseState === 'flash' ? '#ffffff' : `rgb(${BONE})`;
       g.fillText(l.ch, x, y);
@@ -886,6 +964,7 @@ export function createRain(
 
     ctx.globalAlpha = 1;
     ctx.font = `500 ${FOCAL_SIZE}px ${MONO}`;
+    ctx.textBaseline = 'top';
     if (nctx) nctx.globalAlpha = 1;
   }
 
