@@ -41,6 +41,10 @@ import { MOTIFS, type Motif } from './motifs';
   than once per column, which is the expensive part of canvas text.
 */
 
+/* Must match --font-mono exactly. The intro hands its glyphs to the real
+   display type, and that only works because they are the same face. */
+const MONO = '"JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace';
+
 const BONE = '237, 232, 224';
 const RIM = '191, 212, 238';
 
@@ -607,7 +611,7 @@ export function createRain(
       const cols = noiseByTier[ti];
       if (!cols.length) continue;
 
-      ctx.font = `500 ${tier.size}px "JetBrains Mono", ui-monospace, monospace`;
+      ctx.font = `500 ${tier.size}px ${MONO}`;
       ctx.globalAlpha = tier.alpha;
       ctx.fillStyle = `rgb(${BONE})`;
 
@@ -625,7 +629,7 @@ export function createRain(
     }
 
     // --- focal -------------------------------------------------------
-    ctx.font = `500 ${FOCAL_SIZE}px "JetBrains Mono", ui-monospace, monospace`;
+    ctx.font = `500 ${FOCAL_SIZE}px ${MONO}`;
 
     for (const c of focal) {
       if (!c.active) {
@@ -669,7 +673,7 @@ export function createRain(
         const size = c.lockSize ?? FOCAL_SIZE * phraseScale;
         const resized = size !== FOCAL_SIZE;
         if (resized) {
-          ctx.font = `600 ${size}px "JetBrains Mono", ui-monospace, monospace`;
+          ctx.font = `600 ${size}px ${MONO}`;
         }
         ctx.globalAlpha = phraseAlpha;
         ctx.fillStyle = phraseState === 'flash' ? '#ffffff' : `rgb(${BONE})`;
@@ -679,7 +683,7 @@ export function createRain(
         ctx.fillText(c.lockChar, x, y);
         ctx.fillStyle = `rgb(${BONE})`;
         if (resized) {
-          ctx.font = `500 ${FOCAL_SIZE}px "JetBrains Mono", ui-monospace, monospace`;
+          ctx.font = `500 ${FOCAL_SIZE}px ${MONO}`;
         }
         continue;
       }
@@ -856,7 +860,7 @@ export function createRain(
         /* Still falling, so it belongs to the storm: drawn into the trailing
            canvas at the size it will land at, scrambling like everything
            else around it. */
-        ctx.font = `600 ${l.csize}px "JetBrains Mono", ui-monospace, monospace`;
+        ctx.font = `600 ${l.csize}px ${MONO}`;
         ctx.globalAlpha =
           0.4 +
           0.45 *
@@ -874,14 +878,14 @@ export function createRain(
       const y = l.cy + (l.hy - l.cy) * e;
       const size = l.csize + (l.hsize - l.csize) * e;
 
-      g.font = `600 ${size}px "JetBrains Mono", ui-monospace, monospace`;
+      g.font = `600 ${size}px ${MONO}`;
       g.globalAlpha = phraseAlpha;
       g.fillStyle = phraseState === 'flash' ? '#ffffff' : `rgb(${BONE})`;
       g.fillText(l.ch, x, y);
     }
 
     ctx.globalAlpha = 1;
-    ctx.font = `500 ${FOCAL_SIZE}px "JetBrains Mono", ui-monospace, monospace`;
+    ctx.font = `500 ${FOCAL_SIZE}px ${MONO}`;
     if (nctx) nctx.globalAlpha = 1;
   }
 
@@ -910,16 +914,18 @@ export function createRain(
     */
     if (!introRevealed && introT >= INTRO_MORPH_AT) {
       introRevealed = true;
-      phraseState = 'fading';
       onIntroReveal?.();
     }
 
-    // The intro owns the name's opacity outright, so there is no second
-    // schedule that can fade it early.
-    phraseAlpha =
-      introT < INTRO_MORPH_AT
-        ? 1
-        : Math.max(0, 1 - (introT - INTRO_MORPH_AT) / (INTRO_MORPH_MS / 1000));
+    /*
+      No crossfade. The glyphs are the same face at the same size on the same
+      baseline as the display type underneath, so the two are indistinguishable
+      and fading one across the other only produced a double image. The canvas
+      letters simply stop being drawn a couple of frames after the real type is
+      switched on — the overlap is identical pixels, so it cannot be seen.
+    */
+    phraseAlpha = 1;
+    if (introRevealed && introT >= INTRO_MORPH_AT + 0.08) letters = [];
 
     clearK =
       introT < INTRO_MOVE_AT ? 0 : Math.min(1, (introT - INTRO_MOVE_AT) / 1.0);

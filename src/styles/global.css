@@ -154,8 +154,7 @@ ol {
 .t-display {
   font-family: var(--font-display);
   font-size: var(--t-display);
-  font-weight: 620;
-  font-variation-settings: 'wdth' 100;
+  font-weight: 700;
   line-height: var(--lh-tight);
   letter-spacing: var(--ls-display);
   color: var(--bone);
@@ -166,7 +165,6 @@ ol {
   font-family: var(--font-display);
   font-size: var(--t-h1);
   font-weight: 600;
-  font-variation-settings: 'wdth' 104;
   line-height: var(--lh-snug);
   letter-spacing: var(--ls-h1);
   color: var(--bone);
@@ -177,7 +175,6 @@ ol {
   font-family: var(--font-display);
   font-size: var(--t-h2);
   font-weight: 600;
-  font-variation-settings: 'wdth' 104;
   line-height: var(--lh-snug);
   letter-spacing: var(--ls-h2);
   color: var(--bone);

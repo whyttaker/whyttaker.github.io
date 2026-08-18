@@ -112,22 +112,17 @@ import { site } from '../../data/site';
       transform 1200ms var(--e-out);
   }
 
-  /* The name is the element being morphed into, so it gets its own timing:
-     it comes up faster than the surrounding content and settles from a hair
-     under full size, meeting the canvas glyphs as they dissolve. Everything
-     else follows a beat later so the name lands on its own. */
+  /* The name switches on instantly — no fade, no scale. The canvas glyphs
+     sitting on top of it are the same face at the same size and baseline, so
+     the swap is one set of identical pixels replacing another. Any transition
+     here reintroduces the double image this was meant to remove. */
   :global(html[data-intro]) .hero__name {
     opacity: 0;
-    transform: scale(0.986);
-    transform-origin: left center;
   }
 
   :global(html[data-intro][data-intro-reveal]) .hero__name {
     opacity: 1;
-    transform: none;
-    transition:
-      opacity 620ms var(--e-out),
-      transform 900ms var(--e-out);
+    transition: none;
   }
 
   :global(html[data-intro][data-intro-reveal]) .hero__eyebrow,

@@ -1,14 +1,12 @@
 ---
-import '@fontsource-variable/archivo/wdth.css';
+import '@fontsource-variable/jetbrains-mono/wght.css';
 import '@fontsource-variable/inter/wght.css';
-import '@fontsource/jetbrains-mono/400.css';
-import '@fontsource/jetbrains-mono/500.css';
 import '../styles/global.css';
 
 /* Fonts are only discovered after the stylesheet parses, which leaves the
    display face swapping in well after first paint. Importing the two latin
    subsets as URLs lets us preload them in the document head instead. */
-import archivoLatin from '@fontsource-variable/archivo/files/archivo-latin-wdth-normal.woff2?url';
+import monoLatin from '@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2?url';
 import interLatin from '@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url';
 
 import GlassFilter from '../components/astro/GlassFilter.astro';
@@ -39,7 +37,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <meta name="theme-color" content="#000000" />
 
-    <link rel="preload" as="font" type="font/woff2" href={archivoLatin} crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href={monoLatin} crossorigin />
     <link rel="preload" as="font" type="font/woff2" href={interLatin} crossorigin />
 
     <meta property="og:type" content="website" />

@@ -29,28 +29,32 @@
   --ember-dim: rgba(224, 134, 63, 0.18);
 
   /* --- Type ------------------------------------------------------------
-     Archivo carries a width axis; semi-expanded caps read as lettering
-     engraved on an instrument panel, which is the whole Strata conceit.    */
-  --font-display: 'Archivo Variable', 'Archivo', system-ui, sans-serif;
+     Display and mono are the same face. The hero's intro assembles the name
+     out of the rain and hands it to the real type; with two different
+     typefaces that handover was a visible double image, and no amount of
+     easing fixes a letterform mismatch. One CLI face means the swap is
+     literally the same pixels. Inter still carries the body, so the page
+     keeps a real contrast — terminal against humanist sans.               */
+  --font-display: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
   --font-body: 'Inter Variable', 'Inter', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', monospace;
+  --font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
 
-  --t-display: clamp(3.25rem, 11vw, 10.5rem);
-  --t-h1: clamp(2.5rem, 6vw, 4.5rem);
-  --t-h2: clamp(1.75rem, 3.2vw, 2.75rem);
-  --t-h3: 1.375rem;
+  --t-display: clamp(2.1rem, 8.2vw, 8.5rem);
+  --t-h1: clamp(1.9rem, 4.4vw, 3.4rem);
+  --t-h2: clamp(1.4rem, 2.5vw, 2.1rem);
+  --t-h3: 1.2rem;
   --t-body-lg: 1.125rem;
   --t-body: 1rem;
   --t-meta: 0.8125rem;
   --t-mono: 0.75rem;
 
-  --ls-display: -0.045em;
-  --ls-h1: -0.035em;
-  --ls-h2: -0.025em;
-  --ls-h3: -0.015em;
+  --ls-display: 0em;
+  --ls-h1: -0.02em;
+  --ls-h2: -0.015em;
+  --ls-h3: -0.01em;
   --ls-mono: 0.08em;
 
-  --lh-tight: 0.94;
+  --lh-tight: 1.04;
   --lh-snug: 1.15;
   --lh-body: 1.65;
 

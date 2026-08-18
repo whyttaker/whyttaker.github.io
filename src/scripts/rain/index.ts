@@ -31,54 +31,39 @@ function measureNameTargets(canvas: HTMLCanvasElement) {
 
   const cs = getComputedStyle(nameEl);
   const probe = document.createElement('canvas').getContext('2d')!;
-  probe.textBaseline = 'alphabetic';
 
   /*
-    Baselines are aligned from real font metrics rather than a guessed cap
-    offset. Eyeballing a fraction of the size put the glyphs about 12px high
-    of the type they land on, and the error scales with viewport width.
+    The canvas and the DOM now use the same face, so nothing here is an
+    approximation: the size is the computed font-size, the letter pitch is the
+    font's own advance, and the vertical origin comes from the same ascent the
+    browser lays the line out with. The glyphs land on the display type exactly,
+    which is what lets the handover be an instant swap instead of a crossfade —
+    a crossfade between two different faces was a visible double image.
 
-    Monospace cannot match both the width and the cap height of a proportional
-    face — its advance is far wider — so width wins: the block occupies the
-    same footprint, and the crossfade reads as the letterforms changing in
-    place rather than the name jumping size.
+    This depends on the display type having zero letter-spacing (--ls-display),
+    since canvas places each character on the raw advance.
   */
-  const measureAscent = (font: string) => {
-    probe.font = font;
-    const m = probe.measureText('H');
-    return m.fontBoundingBoxAscent ?? 0;
-  };
+  const size = parseFloat(cs.fontSize);
+  const font = `${cs.fontWeight} ${size}px ${cs.fontFamily}`;
+  probe.font = font;
+  probe.textBaseline = 'alphabetic';
 
-  const domFont = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
-  const domAscent = measureAscent(domFont);
-  const domDescent = (() => {
-    probe.font = domFont;
-    return probe.measureText('H').fontBoundingBoxDescent ?? 0;
-  })();
-  const lineHeight = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize);
-  const halfLeading = (lineHeight - (domAscent + domDescent)) / 2;
-
-  // One size for both lines: monospace has a single advance, so the size is
-  // shared and only the tracking differs per line.
-  const sizes = lines.map((el) => {
-    const r = el.getBoundingClientRect();
-    return r.width / Math.max(1, el.textContent!.trim().length) / 0.6;
-  });
-  const size = Math.min(...sizes);
-  const monoAscent = measureAscent(
-    `600 ${size}px "JetBrains Mono", ui-monospace, monospace`
-  );
+  const m = probe.measureText('M');
+  const advance = m.width;
+  const ascent = m.fontBoundingBoxAscent ?? size * 0.8;
+  const descent = m.fontBoundingBoxDescent ?? size * 0.2;
+  const lineHeight = parseFloat(cs.lineHeight) || size;
+  const halfLeading = (lineHeight - (ascent + descent)) / 2;
 
   return lines.map((el) => {
     const r = el.getBoundingClientRect();
-    const text = el.textContent?.trim() ?? '';
-    const baseline = r.top - c.top + halfLeading + domAscent;
     return {
-      text,
+      text: el.textContent?.trim() ?? '',
       x: r.left - c.left,
-      // Canvas draws with textBaseline 'top', i.e. from the em-box top.
-      y: baseline - monoAscent,
-      pitch: r.width / Math.max(1, text.length),
+      // Canvas draws from the em-box top; the browser puts that at the line
+      // box top plus half the leading.
+      y: r.top - c.top + halfLeading,
+      pitch: advance,
       size,
     };
   });
