@@ -237,6 +237,13 @@ ol {
   position: relative;
   z-index: var(--z-content);
   padding-block: var(--sp-section);
+  /* Same fix as the JS scroll handler, for the native/reduced-motion path:
+     a hash jump aligns this element's own top with scroll-padding-top, which
+     left --sp-section worth of empty top padding sitting between the nav and
+     the actual heading. A negative scroll-margin-top pulls the anchor point
+     down by exactly that padding, so the heading itself — not the padding
+     above it — is what lands at scroll-padding-top. */
+  scroll-margin-top: calc(-1 * var(--sp-section));
 }
 
 /* Section heads are a structural device that encodes something true: the
