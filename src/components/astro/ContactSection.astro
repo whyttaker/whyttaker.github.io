@@ -1,7 +1,11 @@
 ---
 import SectionHead from './SectionHead.astro';
-import CopyEmail from '../react/CopyEmail';
 import { site, links } from '../../data/site';
+
+const gmailHref = `https://mail.google.com/mail/?view=cm&fs=1&to=${site.email}`;
+// Discord stays in the shared `links` data (footer, resume) — just left out
+// of this section's own "Elsewhere" list.
+const elsewhere = links.filter((l) => l.label !== 'Discord');
 ---
 
 <section class="section contact" id="contact" aria-labelledby="contact-label">
@@ -11,12 +15,27 @@ import { site, links } from '../../data/site';
     <div class="contact__grid">
       <div>
         <p class="contact__lede t-h1">
-          Open to conversations about systems, scale, and the products built on
-          top of them.
+          Open to opportunities and conversations around scalable systems,
+          thoughtful products, and solving challenging engineering problems.
         </p>
 
         <div class="contact__actions">
-          <CopyEmail client:visible email={site.email} />
+          <p class="contact__email t-mono">{site.email}</p>
+          <div class="contact__buttons">
+            <a class="contact__btn" href={`mailto:${site.email}`} data-magnetic>
+              Open in Mail
+            </a>
+            <a
+              class="contact__btn"
+              href={gmailHref}
+              target="_blank"
+              rel="noreferrer noopener"
+              data-magnetic
+            >
+              Open in Gmail
+              <span class="contact__arrow" aria-hidden="true">&#8599;</span>
+            </a>
+          </div>
         </div>
       </div>
 
@@ -26,7 +45,7 @@ import { site, links } from '../../data/site';
           <dd>
             <ul class="contact__links">
               {
-                links.map((l) => (
+                elsewhere.map((l) => (
                   <li>
                     <a
                       class="contact__link"
@@ -51,15 +70,15 @@ import { site, links } from '../../data/site';
           <dd>
             <ul class="contact__links">
               <li>
-                <a class="contact__link" href="/resume/">
-                  Read on the site
-                  <span class="contact__arrow" aria-hidden="true">&#8594;</span>
-                </a>
-              </li>
-              <li>
                 <a class="contact__link" href={site.resumePdf} download>
                   Download PDF
                   <span class="contact__arrow" aria-hidden="true">&#8595;</span>
+                </a>
+              </li>
+              <li>
+                <a class="contact__link" href="/resume/">
+                  View Resume
+                  <span class="contact__arrow" aria-hidden="true">&#8594;</span>
                 </a>
               </li>
             </ul>
@@ -84,25 +103,43 @@ import { site, links } from '../../data/site';
   }
 
   .contact__lede {
-    max-width: 20ch;
+    /* max-width alone didn't do anything here: the grid column (not the
+       ch-based cap) was already the binding constraint at t-h1's size, so
+       the longer copy this now holds still wrapped into 7 short lines and
+       towered over the rest of the section. Sized down from t-h1 instead —
+       still a bold lede, just proportioned for a full sentence rather than
+       a short punchy line. */
+    font-size: clamp(2rem, 4vw, 3.25rem);
+    max-width: 34ch;
     margin-bottom: var(--s-12);
   }
 
-  /* --- Copy control ------------------------------------------------------
-     Styles live here rather than in the island so the button is correct on
-     first paint, before React hydrates. */
-  .contact__actions :global(.copy) {
+  /* --- Contact actions -----------------------------------------------------
+     Two explicit mail actions instead of copy-to-clipboard: a plain mailto
+     link (whatever the OS default client is) and a Gmail compose link. Both
+     take the same matte, engraved-surface treatment as the rest of the page
+     content — flat, not floating chrome like the nav. */
+  .contact__email {
+    color: var(--bone-55);
+    margin-bottom: var(--s-4);
+  }
+
+  .contact__buttons {
     display: flex;
     flex-wrap: wrap;
-    align-items: center;
     gap: var(--s-4);
   }
 
-  .contact__actions :global(.copy__btn) {
+  .contact__btn {
     display: inline-flex;
     align-items: center;
     gap: var(--s-4);
     padding: 0.9rem 1.5rem;
+    border-radius: var(--r-pill);
+    background: var(--surface-01);
+    box-shadow:
+      0 -1px 0 rgba(0, 0, 0, 0.9) inset,
+      0 1px 0 rgba(237, 232, 224, 0.045);
     font-family: var(--font-mono);
     font-size: 0.875rem;
     letter-spacing: 0.02em;
@@ -111,54 +148,13 @@ import { site, links } from '../../data/site';
        composes the magnetic offset with the --press scale set on :active. */
     transition:
       transform var(--d-fast) var(--e-snap),
+      background var(--d-base) var(--e-out),
       box-shadow var(--d-base) var(--e-out);
   }
 
-  .contact__actions :global(.copy__btn[data-state='copied']) {
-    box-shadow:
-      0 1px 0 0 rgba(237, 232, 224, 0.1) inset,
-      0 0 0 1px var(--ember),
-      0 0 24px -6px var(--ember-dim);
-  }
-
-  .contact__actions :global(.copy__label) {
-    animation: label-in var(--d-base) var(--e-out);
-  }
-
-  @keyframes label-in {
-    from {
-      opacity: 0;
-      transform: translateY(0.4em);
-      clip-path: inset(0 0 100% 0);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-      clip-path: inset(0 0 0 0);
-    }
-  }
-
-  .contact__actions :global(.copy__icon) {
-    color: var(--bone-55);
-  }
-
-  .contact__actions :global(.copy__btn[data-state='copied'] .copy__icon) {
-    color: var(--ember);
-  }
-
-  .contact__actions :global(.copy__fallback) {
-    color: var(--bone-55);
-    transition: color var(--d-base) var(--e-out);
-  }
-
-  .contact__actions :global(.copy__fallback:hover) {
-    color: var(--bone);
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .contact__actions :global(.copy__label) {
-      animation: none;
-    }
+  .contact__btn:hover,
+  .contact__btn:focus-visible {
+    background: var(--surface-02);
   }
 
   /* --- Details ------------------------------------------------------------ */

@@ -47,27 +47,6 @@
     var(--shadow-ambient);
 }
 
-.matte::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1px;
-  background: linear-gradient(
-    to bottom,
-    var(--bone-22),
-    transparent 32%,
-    transparent 68%,
-    rgba(0, 0, 0, 0.6)
-  );
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
-}
-
 .matte--raised {
   background: var(--surface-02);
   box-shadow:

@@ -4,14 +4,14 @@ export const site = {
   last: 'Worland',
   monogram: 'WW',
   role: 'Software Development Engineer',
-  company: 'Amazon',
   location: 'San Diego, CA',
   email: 'whyttaker@gmail.com',
   phone: '714-913-3626',
   resumePdf: '/resume/Whittaker-Worland-Resume.pdf',
   description:
     'Focused on delivering results for customers, optimizing systems and solutions to make every experience faster, smarter, and more reliable.',
-  passion: 'As well as a game dev, always looking for new ways to create exciting experiences.',
+  passion:
+    'Also a passionate game developer, always exploring new ways to create engaging and memorable experiences.',
 } as const;
 
 export const links = [

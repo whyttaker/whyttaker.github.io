@@ -7,7 +7,7 @@ import { education, skills, resumeProjects, leadership } from '../data/resume';
 
 <Base
   title="Resume"
-  description={`Resume for ${site.name}, ${site.role} at ${site.company}.`}
+  description={`Resume for ${site.name}, ${site.role}.`}
 >
   <article class="resume">
     <div class="shell">
@@ -20,7 +20,7 @@ import { education, skills, resumeProjects, leadership } from '../data/resume';
         <header class="sheet__head">
           <div>
             <h1 class="sheet__name t-h2">{site.name}</h1>
-            <p class="sheet__role">{site.role} · {site.company}</p>
+            <p class="sheet__role">{site.role}</p>
           </div>
           <a class="sheet__download t-mono" href={site.resumePdf} download data-magnetic>
             Download PDF <span aria-hidden="true">&#8595;</span>

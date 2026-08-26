@@ -17,13 +17,21 @@ const honors = [
 
     <div class="about">
       <div class="about__prose">
-        <p class="t-lead">
-          Computer Science student at UC Irvine's Donald Bren School of ICS, with a minor
-          in Game Design. Currently a Software Development Engineer at Amazon, where I
-          build and maintain scalable distributed systems and AI-powered tooling for
-          financial infrastructure handling hundreds of millions of daily transactions.
+        {/* Condensed stand-in for the three paragraphs below, mobile only —
+            see .about__summary in the styles. */}
+        <p class="t-lead about__summary">
+          Computer Science graduate of UC Irvine (Game Design minor) and Software
+          Development Engineer with experience building distributed systems and AI tooling
+          for financial infrastructure. Former Division I scholar-athlete.
         </p>
-        <p class="t-body">
+
+        <p class="t-lead about__full">
+          Computer Science graduate of UC Irvine's Donald Bren School of ICS, with a minor
+          in Game Design. Software Development Engineer with experience building and
+          maintaining scalable distributed systems and AI-powered tooling for financial
+          infrastructure handling hundreds of millions of daily transactions.
+        </p>
+        <p class="t-body about__full">
           I'm drawn to the intersection of engineering scale and creative craft: whether
           that's architecting event-driven pipelines on AWS, leading a game team to win a
           design competition, or pushing the limits of what LLMs can do in production.
@@ -31,7 +39,7 @@ const honors = [
           learning, and game development, and I find the most interesting problems tend to
           live where those disciplines overlap.
         </p>
-        <p class="t-body">
+        <p class="t-body about__full">
           Outside of engineering, I competed as a Division I athlete, an experience that
           shaped how I think about team dynamics, composure under pressure, and showing up
           consistently. Dean's List, Scholar-Athlete, and 1st Place at the UC Irvine Video
@@ -81,6 +89,13 @@ const honors = [
     margin-top: var(--s-6);
   }
 
+  /* Desktop reads the full three paragraphs; mobile gets the one-line
+     stand-in instead — swapped below the 60rem breakpoint that already
+     governs this section's mobile layout. */
+  .about__summary {
+    display: none;
+  }
+
   .about__side {
     display: flex;
     flex-direction: column;
@@ -111,15 +126,12 @@ const honors = [
     height: auto;
     aspect-ratio: 1;
     object-fit: cover;
-    /* Held back at rest so the one photograph on the page doesn't break the
-       restrained palette; colour returns on hover. */
-    filter: grayscale(0.68) brightness(0.76) contrast(1.06);
-    transition: filter var(--d-slow) var(--e-out);
-  }
-
-  .portrait:hover .portrait__img,
-  .portrait:focus-within .portrait__img {
-    filter: grayscale(0) brightness(0.96) contrast(1);
+    /* A light hold-back rather than the old hover-to-reveal treatment: full
+       raw brightness read as too hot against the rest of the page's
+       restrained palette, but the photo should still read clearly at rest,
+       not dimmed down and waiting for a hover no touch device will ever
+       trigger. */
+    filter: grayscale(0.25) brightness(0.92) contrast(1.02);
   }
 
   /* --- Plaques ----------------------------------------------------------- */
@@ -160,6 +172,14 @@ const honors = [
   @media (max-width: 60rem) {
     .about {
       grid-template-columns: 1fr;
+    }
+
+    .about__summary {
+      display: block;
+    }
+
+    .about__full {
+      display: none;
     }
 
     .about__side {

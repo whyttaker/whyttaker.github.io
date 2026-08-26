@@ -39,6 +39,16 @@ const total = stack.reduce((n, s) => n + s.items.length, 0);
 </section>
 
 <style>
+  /* Cut on mobile: a hover-driven relatedness map has nothing to do on a
+     touch screen, and the page reads tighter as Hero → Work → Experience →
+     About → Contact without a section built around a desktop-only
+     interaction. */
+  @media (max-width: 60rem) {
+    #stack {
+      display: none;
+    }
+  }
+
   .stack__hint {
     margin-top: calc(var(--s-16) * -1 + var(--s-6));
     margin-bottom: var(--s-12);

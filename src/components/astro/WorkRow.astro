@@ -59,7 +59,7 @@ const { project: p } = Astro.props;
       </ul>
 
       <span class="work__cta t-mono">
-        Read case study
+        Read more
         <span class="work__arrow" aria-hidden="true">
           &#8594;
         </span>
@@ -215,9 +215,89 @@ const { project: p } = Astro.props;
 
   /* --- Responsive ------------------------------------------------------- */
   @media (max-width: 60rem) {
+    /* Each row becomes its own bounded card — a flat stack of text with no
+       edges read as one continuous scroll on a phone. The surface and inset
+       shadow reuse the same "engraved panel" treatment as .stack__item
+       elsewhere on the page, so this reads as the site's existing material
+       rather than a new visible-card pattern bolted on for mobile. */
     .work__link {
-      grid-template-columns: 1fr;
-      gap: var(--s-6);
+      grid-template-columns: auto minmax(0, 1fr);
+      grid-auto-rows: auto;
+      /* Row 1 holds both the icon (48px) and the title (one line, ~32px) —
+         the icon is the taller of the two, so it sets the row's height.
+         `center` (not `start`) is what makes the shorter title actually sit
+         in the middle of that row instead of pinned to its top edge, which
+         is what centers the two against each other rather than against the
+         row bounds alone. Thesis/facts/stack/cta are each solo in their own
+         row further down, where start vs center makes no visible difference
+         — a row sized by a single item is already exactly that item's
+         height, so this doesn't shift anything below the header. */
+      align-items: center;
+      column-gap: var(--s-4);
+      row-gap: 0;
+      padding: var(--s-6);
+      border-radius: var(--r-md);
+      background: var(--surface-01);
+      box-shadow:
+        0 -1px 0 rgba(0, 0, 0, 0.9) inset,
+        0 1px 0 rgba(237, 232, 224, 0.045);
+    }
+
+    /* Unwraps .work__body so the eyebrow and title can be placed beside the
+       thumbnail while thesis/facts/stack/cta span the full card width below
+       — without touching DOM order or the desktop grid, which still only
+       ever addresses .work__media and .work__body as .work__link's two
+       children. */
+    .work__body {
+      display: contents;
+    }
+
+    /* The mark sits to the left of the title, not above the card — small
+       enough to read as an icon next to the name rather than a screenshot
+       of the thing. Only one header row now that the eyebrow is hidden, so
+       it spans just the title's row. */
+    .work__media {
+      grid-column: 1;
+      grid-row: 1;
+      --h: clamp(3rem, 9vw, 4rem);
+      box-shadow: var(--shadow-inset);
+    }
+
+    /* The bottom-fade sheen exists so text overlaid on a full-size banner
+       stays readable. At icon size nothing sits on top of the image, so the
+       gradient just muddies a very small graphic. */
+    .work__sheen {
+      display: none;
+    }
+
+    /* The discipline/context line and the tag chips are card metadata —
+       useful on desktop where there's room, redundant weight on a phone
+       where the title and thesis already carry the read. */
+    .work__eyebrow,
+    .work__stack {
+      display: none;
+    }
+
+    .work__title {
+      grid-column: 2;
+      grid-row: 1;
+      /* align-items: center (above) centers each row-1 item's MARGIN box,
+         not just its content — title's own margin-bottom (kept on desktop
+         for the gap before the thesis paragraph) was counting toward that
+         box and skewing the title off-center against the icon. Zeroed here
+         and made up on .work__thesis's margin-top instead, which is solo in
+         its own row and so doesn't feed back into this alignment at all. */
+      margin-bottom: 0;
+    }
+
+    .work__thesis {
+      grid-column: 1 / -1;
+      grid-row: 2;
+      /* s-3 restores what .work__title's margin-bottom used to contribute
+         to this gap, now that it's been zeroed above; s-4 is this rule's
+         own original top margin. */
+      margin-top: calc(var(--s-3) + var(--s-4));
+      margin-bottom: var(--s-4);
     }
 
     /* Role and Outcome no longer share a row. Wrapped side by side with no
@@ -226,19 +306,17 @@ const { project: p } = Astro.props;
        short one-line Role — dense and harder to read than giving each fact
        the full width. */
     .work__facts {
+      grid-column: 1 / -1;
+      grid-row: 3;
       flex-direction: column;
-      gap: var(--s-4);
+      gap: var(--s-3);
+      padding-block: var(--s-3);
+      margin-bottom: var(--s-4);
     }
 
-    /* A little more air between blocks — text wraps onto more lines at this
-       width while the margins stayed the same, which is what read as
-       crowded even though nothing actually got closer together. */
-    .work__thesis {
-      margin-bottom: var(--s-8);
-    }
-
-    .work__stack {
-      margin-bottom: var(--s-8);
+    .work__cta {
+      grid-column: 1 / -1;
+      grid-row: 4;
     }
   }
 </style>

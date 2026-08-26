@@ -17,7 +17,7 @@ const personal = allProjects.filter((p) => p.data.category === 'personal');
       professional.length > 0 && (
         <div class="work-group" aria-labelledby="professional-label">
           <SectionHead
-            label="Professional Experience"
+            label="Professional Projects"
             id="professional-label"
             count={`${professional.length} roles`}
           />
@@ -32,7 +32,7 @@ const personal = allProjects.filter((p) => p.data.category === 'personal');
     }
 
     <div class="work-group" aria-labelledby="work-label">
-      <SectionHead label="Selected Work" id="work-label" count={`${personal.length} projects`} />
+      <SectionHead label="Personal Projects" id="work-label" count={`${personal.length} projects`} />
 
       <ol class="work" data-work-list="personal">
         {personal.map((p) => (
@@ -56,6 +56,18 @@ const personal = allProjects.filter((p) => p.data.category === 'personal');
     gap: clamp(4rem, 9vw, 9rem);
   }
 
+  /* The desktop gap is tuned for full-width alternating rows with a large
+     media column; stacked on mobile with a shrunk thumbnail, that much air
+     between rows reads as dead space rather than rhythm. Each row is now its
+     own bounded card (see WorkRow.astro), so this gap only has to keep
+     adjacent cards visibly apart, not carry the whole sense of separation
+     on its own. */
+  @media (max-width: 60rem) {
+    .work {
+      gap: clamp(2rem, 7vw, 4rem);
+    }
+  }
+
   /* Alternate the reading direction so the page has a rhythm instead of a
      column. Only on wide screens — stacked layouts always lead with media. */
   @media (min-width: 60rem) {
@@ -68,8 +80,8 @@ const personal = allProjects.filter((p) => p.data.category === 'personal');
       justify-self: end;
     }
 
-    /* Selected Work opens on the opposite side from where Professional
-       Experience left off — H & J Cabinets' media lands on the left as the
+    /* Personal Projects opens on the opposite side from where Professional
+       Projects left off — H & J Cabinets' media lands on the left as the
        last professional row, so this list starts on the right instead of
        repeating it across the section break. */
     :global([data-work-list='personal'] .work__row:nth-child(odd) .work__link) {

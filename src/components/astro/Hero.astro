@@ -44,8 +44,7 @@ import { site } from '../../data/site';
       </h1>
 
       <p class="hero__sub">
-        {site.description}<br />
-        <span class="hero__school">{site.passion}</span>
+        {site.description} {site.passion}
       </p>
     </div>
 
@@ -191,11 +190,6 @@ import { site } from '../../data/site';
     color: var(--bone-70);
     max-width: 34ch;
     text-shadow: 0 2px 20px rgba(0, 0, 0, 0.9);
-  }
-
-  .hero__school {
-    color: var(--bone-55);
-    font-size: var(--t-meta);
   }
 
   /* --- Scroll cue ------------------------------------------------------- */

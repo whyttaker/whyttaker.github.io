@@ -33,21 +33,21 @@ export default function GlassNav({ items, monogram, sections }: Props) {
   const reduced = useReducedMotion();
   const ratios = useRef(new Map<string, number>());
 
-  /* Condense once the hero is behind us. On phones the nav lives at the bottom
-     and is a pill from the start, so there is no bare state to leave. */
+  /* Condense once the hero is behind us — same trigger on phones as on
+     desktop, so the nav starts bare at the top of the page everywhere
+     rather than showing the glass pill's shine from the very first frame
+     on mobile. */
   useEffect(() => {
-    const compact = window.matchMedia('(max-width: 48rem)');
-
     const update = () => {
-      setCondensed(compact.matches || window.scrollY > window.innerHeight * 0.6);
+      setCondensed(window.scrollY > window.innerHeight * 0.6);
     };
 
     update();
     window.addEventListener('scroll', update, { passive: true });
-    compact.addEventListener('change', update);
+    window.addEventListener('resize', update);
     return () => {
       window.removeEventListener('scroll', update);
-      compact.removeEventListener('change', update);
+      window.removeEventListener('resize', update);
     };
   }, []);
 

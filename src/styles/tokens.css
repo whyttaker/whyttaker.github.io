@@ -115,3 +115,15 @@
     --d-slow: 160ms;
   }
 }
+
+/* The desktop rhythm (up to 24rem of combined padding between two sections)
+   is tuned for a page read in wide, deliberate scrolls. On a phone that
+   much air between Work → Experience → About → Contact reads as dead
+   scrolling rather than pacing, so every section-to-section gap tightens
+   together — one token, so the whole page's rhythm changes as a unit
+   rather than each section getting its own hand-tuned override. */
+@media (max-width: 48rem) {
+  :root {
+    --sp-section: clamp(3rem, 8vh, 5rem);
+  }
+}

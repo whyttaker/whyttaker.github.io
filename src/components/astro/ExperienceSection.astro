@@ -16,7 +16,7 @@ import { experience } from '../../data/experience';
 
 <section class="section" id="experience" aria-labelledby="exp-label">
   <div class="shell">
-    <SectionHead label="Experience" id="exp-label" count="3 roles" />
+    <SectionHead label="Experience" id="exp-label" count="4 roles" />
 
     <ol class="exp">
       {
@@ -48,6 +48,7 @@ import { experience } from '../../data/experience';
               {role.teams.map((team) => (
                 <div class="exp__team matte">
                   {team.name && <p class="exp__team-name t-mono">{team.name}</p>}
+                  <p class="exp__summary">{team.summary}</p>
                   <ul class="exp__bullets">
                     {team.bullets.map((b) => (
                       <li>{b}</li>
@@ -60,6 +61,17 @@ import { experience } from '../../data/experience';
                   </ul>
                 </div>
               ))}
+
+              {/* Mobile only (see .exp__more below) — the tag chips are cut
+                  there in favour of this, and its ::after stretches over the
+                  whole card so the entire role is a tap target to the full
+                  resume, not just this one line. */}
+              <a class="exp__more t-mono" href="/resume/">
+                Read more
+                <span class="exp__more-arrow" aria-hidden="true">
+                  &#8594;
+                </span>
+              </a>
             </div>
           </li>
         ))
@@ -131,6 +143,12 @@ import { experience } from '../../data/experience';
     min-width: 0;
   }
 
+  /* Desktop reads the full role inline; this only exists as the mobile
+     tap-through to the resume (see the mobile breakpoint below). */
+  .exp__more {
+    display: none;
+  }
+
   .exp__header {
     display: flex;
     flex-wrap: wrap;
@@ -186,6 +204,18 @@ import { experience } from '../../data/experience';
     max-width: 74ch;
   }
 
+  /* The condensed read for mobile — one line standing in for the full
+     bullet list below. Hidden here; swaps with .exp__bullets under the
+     mobile breakpoint. */
+  .exp__summary {
+    display: none;
+    max-width: 74ch;
+    font-size: var(--t-meta);
+    line-height: 1.62;
+    color: var(--bone-70);
+    text-wrap: pretty;
+  }
+
   .exp__bullets li {
     position: relative;
     padding-left: var(--s-6);
@@ -239,6 +269,68 @@ import { experience } from '../../data/experience';
     .exp__header,
     .exp__team {
       padding: var(--s-4);
+    }
+
+    /* Location and period were sharing a row with a "·" between them; at
+       phone width that line was tight enough to wrap mid-value. Stacked —
+       location, then period below it — each reads as its own line instead
+       of a squeeze. */
+    .exp__where {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.2rem;
+    }
+
+    .exp__dot {
+      display: none;
+    }
+
+    /* Five long bullets per team is a wall of text on a phone; the one-line
+       summary carries the read instead, with the full detail still one tap
+       away via the resume/case-study links elsewhere on the page. */
+    .exp__bullets {
+      display: none;
+    }
+
+    .exp__summary {
+      display: block;
+    }
+
+    /* Tag chips are detail for a desktop-width read; on mobile they're cut
+       in favour of a single tap-through to the full resume. */
+    .exp__tags {
+      display: none;
+    }
+
+    /* The whole card becomes the tap target via this link's ::after — it
+       needs a positioned ancestor to stretch against, so .exp__content
+       (not just the link itself) gets position: relative here. */
+    .exp__content {
+      position: relative;
+    }
+
+    .exp__more {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: var(--s-2);
+      color: var(--bone);
+    }
+
+    .exp__more::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+    }
+
+    .exp__more-arrow {
+      display: inline-block;
+      transition: transform var(--d-base) var(--e-out);
+    }
+
+    .exp__more:hover .exp__more-arrow,
+    .exp__more:focus-visible .exp__more-arrow {
+      transform: translateX(0.35rem);
     }
   }
 </style>

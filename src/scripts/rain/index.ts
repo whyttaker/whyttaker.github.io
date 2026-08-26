@@ -99,6 +99,25 @@ function measureNameTargets(canvas: HTMLCanvasElement) {
   });
 }
 
+/*
+  measureNameTargets reads the hero heading's live computed font and its
+  characters' actual on-screen geometry. Both are wrong for a moment on every
+  load: the display webfont is still swapping in over the fallback stack, and
+  a proportional face lays out at different widths than the fallback it
+  replaces. Measuring before that swap freezes the fallback's layout into the
+  intro's landing targets, so the assembled name arrives at coordinates the
+  real DOM text no longer occupies once Archivo actually takes over. The
+  timeout keeps a stalled font fetch from blocking the intro outright — it
+  leaves enough of the intro's own runtime under Base.astro's failsafe that
+  the storm still gets a normal amount of time to run and resolve. */
+function waitForFonts(): Promise<void> {
+  if (!('fonts' in document)) return Promise.resolve();
+  return Promise.race([
+    document.fonts.ready.then(() => undefined),
+    new Promise<void>((resolve) => setTimeout(resolve, 1200)),
+  ]);
+}
+
 export function initRain(): void {
   const canvas = document.querySelector<HTMLCanvasElement>('[data-rain]');
   if (!canvas) return;
@@ -119,19 +138,30 @@ export function initRain(): void {
   }
 
   if (document.documentElement.hasAttribute('data-intro')) {
-    rain.runIntro(
-      () => measureNameTargets(canvas),
-      () => document.documentElement.setAttribute('data-intro-reveal', ''),
-      () => {
-        document.documentElement.removeAttribute('data-intro');
-        document.documentElement.removeAttribute('data-intro-reveal');
-        try {
-          sessionStorage.setItem('ww-intro', '1');
-        } catch {
-          // Private mode: the intro simply plays again next load.
+    waitForFonts().then(() => {
+      // The failsafe below may have already given up while this was
+      // waiting; do not resurrect an intro nobody is going to see.
+      if (!document.documentElement.hasAttribute('data-intro')) return;
+      rain.runIntro(
+        () => measureNameTargets(canvas),
+        () => {
+          // Same failsafe race as above, checked again: the storm keeps
+          // running regardless (setRunning only follows visibility), so on a
+          // connection slow enough that the module bundle itself ate the
+          // failsafe's budget, this callback can still fire after the
+          // failsafe already stripped data-intro and let the CSS default the
+          // hero back to visible. Re-adding data-intro-reveal at that point
+          // would put a live intro state back onto a page the failsafe has
+          // already declared finished.
+          if (!document.documentElement.hasAttribute('data-intro')) return;
+          document.documentElement.setAttribute('data-intro-reveal', '');
+        },
+        () => {
+          document.documentElement.removeAttribute('data-intro');
+          document.documentElement.removeAttribute('data-intro-reveal');
         }
-      }
-    );
+      );
+    });
   }
 
   // Stop the loop when the hero is off screen. There is no reason to keep

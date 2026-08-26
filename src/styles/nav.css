@@ -104,15 +104,30 @@
 }
 
 /* --- Mobile ---------------------------------------------------------------
-   A different interaction model, not a shrunken one: the nav moves to the
-   bottom where a thumb can reach it, and it is always a pill. The monogram
-   drops — on a phone the whole page is one scroll, so a "home" affordance in
-   the nav is dead weight. */
+   Same edge, same bare-to-pill morph as desktop (see GlassNav.tsx) — bare
+   at the top of the hero, condenses into the glass pill on scroll. The
+   monogram drops either way — on a phone the whole page is one scroll, so
+   a "home" affordance in the nav is dead weight. */
+/* Stack itself is cut below this width (see StackSection.astro) — no reason
+   to leave a nav link pointing at a section that isn't there. Its own
+   breakpoint, matched to the section's, rather than nested in the
+   bottom-pill query below: the two don't share a threshold.
+
+   Hides the <li>, not just the <a> inside it: .nav__links distributes space
+   per flex item, and an empty-but-present li still claims a slot in that
+   distribution — hiding only the link left a dead gap where Stack used to
+   sit, which is exactly the "Contact pushed too far right" bug this fixes. */
+@media (max-width: 60rem) {
+  .nav__item:has(> .nav__link[href='/#stack']) {
+    display: none;
+  }
+}
+
 @media (max-width: 48rem) {
   .nav {
-    top: auto;
-    bottom: 0;
-    padding: var(--s-3) var(--s-3) calc(var(--s-3) + env(safe-area-inset-bottom));
+    top: 0;
+    bottom: auto;
+    padding: calc(var(--s-3) + env(safe-area-inset-top)) var(--s-3) var(--s-3);
   }
 
   .nav__shell,
@@ -129,7 +144,7 @@
 
   .nav__links {
     width: 100%;
-    justify-content: space-between;
+    justify-content: space-evenly;
   }
 
   .nav__link {
