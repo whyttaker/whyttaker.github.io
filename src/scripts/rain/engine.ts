@@ -271,7 +271,13 @@ export function createRain(
      that last 5% was the shift you could see at the end of the animation. */
   const INTRO_MORPH_AT = 3.72;
   const INTRO_MORPH_MS = 500;
-  const INTRO_END_AT = 4.6;
+  /* Budgeted for the hero content's own staggered reveal downstream (see
+     Hero.astro): eyebrow wipe, then the summary paragraph streaming in
+     word by word, then the scroll cue — none of that is part of the
+     storm itself, but data-intro/data-intro-reveal have to stay present
+     until all of it has actually finished, or removing them mid-cascade
+     snaps whatever hasn't transitioned yet straight to its end state. */
+  const INTRO_END_AT = 8.0;
   let introT = -1;
   let introPhraseStarted = false;
   let introRevealed = false;
@@ -1065,7 +1071,14 @@ export function createRain(
          glyph-substitution. */
       g.font = e > 0 || phraseState !== 'converging' ? scaledFont(l, size) : `600 ${size}px ${MONO}`;
       g.globalAlpha = phraseAlpha;
-      g.fillStyle = phraseState === 'flash' ? '#ffffff' : `rgb(${BONE})`;
+      /* Always bone, never the white flash regular phrase-reveals get: the
+         intro freezes phraseState at 'flash' for the whole hold-and-travel
+         (see updatePhrase) so its own alpha control doesn't get fought by
+         the generic fade timer, but that left these letters rendering pure
+         white for that entire stretch instead of the brief flash it was
+         meant to be — a visible colour shift right before the letters
+         become the real heading text, which is exactly bone already. */
+      g.fillStyle = `rgb(${BONE})`;
       g.fillText(l.ch, x, y);
     }
 
@@ -1098,20 +1111,23 @@ export function createRain(
       position and size by now, so fading one out as the other comes up reads
       as the letterforms resolving rather than as a swap.
     */
+    /*
+      No crossfade, no overlap either. The glyphs sit at the same position,
+      size and colour as the display type underneath, but canvas and the
+      browser's own text layout are different rendering pipelines — not
+      truly pixel-identical even with matching fill/font/size — so holding
+      both on screen at once for even a few frames reads as a brief flicker
+      where their antialiasing disagrees. Clearing the canvas letters in the
+      same tick the DOM type is revealed, rather than a few frames after,
+      removes that window entirely: exactly one of the two is ever visible.
+    */
     if (!introRevealed && introT >= INTRO_MORPH_AT) {
       introRevealed = true;
       onIntroReveal?.();
+      letters = [];
     }
 
-    /*
-      No crossfade. The glyphs are the same face at the same size on the same
-      baseline as the display type underneath, so the two are indistinguishable
-      and fading one across the other only produced a double image. The canvas
-      letters simply stop being drawn a couple of frames after the real type is
-      switched on — the overlap is identical pixels, so it cannot be seen.
-    */
     phraseAlpha = 1;
-    if (introRevealed && introT >= INTRO_MORPH_AT + 0.08) letters = [];
 
     clearK =
       introT < INTRO_MOVE_AT ? 0 : Math.min(1, (introT - INTRO_MOVE_AT) / 1.0);

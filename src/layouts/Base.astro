@@ -92,13 +92,15 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
         It deliberately does NOT run when: the visitor asked for reduced
         motion, they are deep-linking to a section, or this is not the home
         page. It plays on every load/reload of "/" by design. And a failsafe
-        removes it regardless after 6.2s, so a thrown exception in the rain
+        removes it regardless after 9s, so a thrown exception in the rain
         can never leave someone staring at a permanently dimmed page. That
-        budget is not the 4.6s the storm itself runs for — rain/index.ts
-        holds the intro's start for up to 1.2s waiting on the display webfont
-        before it measures the hero text, so the failsafe has to clear that
-        wait plus the full storm, with room left over, rather than cut the
-        storm off mid-run on a slow connection. */}
+        budget is not the 8s the storm+reveal sequence itself runs for
+        (engine.ts's INTRO_END_AT, sized to cover the hero's own staggered
+        eyebrow/summary/scroll reveal after the storm hands off) —
+        rain/index.ts also holds the intro's start for up to 1.2s waiting on
+        the display webfont before it measures the hero text, so the
+        failsafe has to clear that wait plus the full sequence, with room
+        left over, rather than cut it off mid-run on a slow connection. */}
     <script is:inline>
       (function () {
         var el = document.documentElement;
@@ -113,7 +115,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
         setTimeout(function () {
           el.removeAttribute('data-intro');
           el.removeAttribute('data-intro-reveal');
-        }, 6200);
+        }, 9000);
       })();
     </script>
   </head>

@@ -1,6 +1,21 @@
 ---
 import { site } from '../../data/site';
 
+const summaryWords = `${site.description} ${site.passion}`.split(' ');
+
+/* Tuned so the cascade reads soft rather than snappy — closer to how
+   streamed text settles in than a staggered list popping into place.
+   WORD_FADE_MS runs well past WORD_STEP_MS on purpose: consecutive words
+   overlap mid-fade instead of each one finishing before the next starts,
+   which is what keeps it reading as one continuous wash of text arriving
+   rather than a metronome of individual pops. SUMMARY_BASE_MS is timed to
+   start once the eyebrow's own wipe (200ms delay + 750ms) has settled. */
+const WORD_STEP_MS = 45;
+const WORD_FADE_MS = 420;
+const SUMMARY_BASE_MS = 950;
+const scrollDelayMs =
+  SUMMARY_BASE_MS + (summaryWords.length - 1) * WORD_STEP_MS + WORD_FADE_MS + 200;
+
 /*
   The hero is a canvas of falling glyphs (see scripts/rain/) plus real DOM text
   in front of it.
@@ -43,14 +58,22 @@ import { site } from '../../data/site';
         <span class="hero__name-line" data-name-line>Worland</span>
       </h1>
 
-      <p class="hero__sub">
-        {site.description} {site.passion}
+      <p
+        class="hero__sub"
+        style={`--summary-base: ${SUMMARY_BASE_MS}ms; --word-step: ${WORD_STEP_MS}ms; --word-fade: ${WORD_FADE_MS}ms`}
+      >
+        {summaryWords.map((word, i) => (
+          <>
+            <span class="hero__sub-word" style={`--i: ${i}`}>{word}</span>
+            {i < summaryWords.length - 1 && ' '}
+          </>
+        ))}
       </p>
     </div>
 
   </div>
 
-  <a class="hero__scroll t-mono" href="#work">
+  <a class="hero__scroll t-mono" href="#work" style={`--scroll-delay: ${scrollDelayMs}ms`}>
     <span class="hero__scroll-rule" aria-hidden="true"></span>
     <span>Scroll</span>
   </a>
@@ -115,21 +138,58 @@ import { site } from '../../data/site';
      Content stays painted rather than hidden, so the largest contentful paint
      is not deferred until the animation ends and a failed script still leaves
      a readable hero. */
-  :global(html[data-intro]) .hero__eyebrow,
-  :global(html[data-intro]) .hero__sub,
   :global(html[data-intro]) .hero__scroll {
     opacity: 0.04;
     transform: translateY(0.6rem);
   }
 
-  :global(html[data-intro][data-intro-reveal]) .hero__eyebrow,
-  :global(html[data-intro][data-intro-reveal]) .hero__sub,
+  /* The eyebrow wipes in left to right rather than just fading up — a soft
+     14%-wide feather sweeping across it, not a hard-edged clip. --wipe only
+     exists while data-intro is present at all; once that attribute is gone
+     (reduced motion, or after the sequence finishes) no mask applies and
+     this is plain, always-visible text. */
+  @property --wipe {
+    syntax: '<percentage>';
+    inherits: false;
+    initial-value: 0%;
+  }
+
+  :global(html[data-intro]) .hero__eyebrow {
+    --wipe: 0%;
+    -webkit-mask-image: linear-gradient(to right, black calc(var(--wipe) - 14%), transparent var(--wipe));
+    mask-image: linear-gradient(to right, black calc(var(--wipe) - 14%), transparent var(--wipe));
+  }
+
+  :global(html[data-intro][data-intro-reveal]) .hero__eyebrow {
+    --wipe: 114%;
+    transition: --wipe 750ms var(--e-out) 200ms;
+  }
+
+  /* The summary streams in word by word once the eyebrow's wipe has
+     settled — a soft fade with no movement of its own, each word's fade
+     (--word-fade) running well past the gap before the next one starts
+     (--word-step), so consecutive words overlap mid-fade instead of
+     popping in one at a time. --summary-base/--word-step/--word-fade come
+     from the same constants that size the scroll cue's delay below, so all
+     four stay in sync from one source rather than four hand-tuned numbers. */
+  :global(html[data-intro]) .hero__sub-word {
+    opacity: 0.04;
+  }
+
+  :global(html[data-intro][data-intro-reveal]) .hero__sub-word {
+    opacity: 1;
+    transition: opacity var(--word-fade) var(--e-out) calc(var(--summary-base) + var(--i) * var(--word-step));
+  }
+
+  /* Scroll cue waits until the summary has fully streamed in, so it reads
+     as "everything has loaded" rather than another element racing in
+     early alongside words still appearing above it. */
   :global(html[data-intro][data-intro-reveal]) .hero__scroll {
     opacity: 1;
     transform: none;
     transition:
-      opacity 900ms var(--e-out) 200ms,
-      transform 1100ms var(--e-out) 200ms;
+      opacity 900ms var(--e-out) var(--scroll-delay),
+      transform 1100ms var(--e-out) var(--scroll-delay);
   }
 
   /* The name switches on and does not move. The canvas glyphs sitting on it
@@ -174,10 +234,17 @@ import { site } from '../../data/site';
     flex-direction: column;
     margin-bottom: var(--s-8);
     /* Belt and braces over the dimming ellipse: the type carries its own
-       shadow so a bright column passing behind it can never break the read. */
+       shadow so a bright column passing behind it can never break the read.
+       In em, not px: --t-display spans 3.25rem to 10.5rem, and a fixed-px
+       blur tuned for the desktop end is a shadow bigger than the letters
+       themselves at the mobile end (60px of blur on 52px type) — it pools
+       into a visible dark smudge under the name the instant the canvas
+       hands off to this text, which the flat-filled canvas glyphs never
+       had. Scaling with the element's own font-size keeps the shadow the
+       same proportion of the letters at every size in between. */
     text-shadow:
-      0 2px 30px rgba(0, 0, 0, 0.95),
-      0 0 60px rgba(0, 0, 0, 0.8);
+      0 0.0125em 0.19em rgba(0, 0, 0, 0.95),
+      0 0 0.38em rgba(0, 0, 0, 0.8);
   }
 
   .hero__name-line:last-child {
