@@ -53,7 +53,7 @@ const honors = [
             src={portrait}
             alt="Whittaker Worland"
             widths={[320, 560]}
-            sizes="(min-width: 60rem) 22rem, 60vw"
+            sizes="(min-width: 60rem) 22rem, 6rem"
             loading="lazy"
             decoding="async"
             class="portrait__img"
@@ -110,7 +110,7 @@ const honors = [
     /* Capped deliberately. At full column width the photograph out-shouts
        the prose, which is the actual content of this section. */
     max-width: 16rem;
-    border-radius: var(--r-md);
+    border-radius: var(--r-pill);
     overflow: hidden;
     background: var(--surface-01);
     box-shadow:
@@ -182,27 +182,24 @@ const honors = [
       display: none;
     }
 
+    /* Plaques take the full row, with the portrait positioned on top of
+       them rather than sharing flex space with them — a negative margin on
+       an in-flow flex sibling doesn't actually move it further once
+       .plaques (flex: 1) grows to fill the space that margin frees up, so
+       out of flow via position: absolute is what makes "left" mean left. */
     .about__side {
-      flex-direction: row;
-      align-items: flex-start;
+      position: relative;
     }
 
     .portrait {
-      flex: 0 0 40%;
-    }
-
-    .plaques {
-      flex: 1;
-    }
-  }
-
-  @media (max-width: 40rem) {
-    .about__side {
-      flex-direction: column;
-    }
-
-    .portrait {
-      max-width: 14rem;
+      position: absolute;
+      /* var(--s-4) matches .plaque's own top padding, so this lines up with
+         where "Dean's List" itself starts rather than the card's outer
+         edge. */
+      top: var(--s-4);
+      right: var(--s-16);
+      max-width: 6rem;
     }
   }
+
 </style>

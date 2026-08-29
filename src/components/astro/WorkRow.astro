@@ -1,16 +1,34 @@
 ---
 import { Image } from 'astro:assets';
 import type { CollectionEntry } from 'astro:content';
+import { computeRowTiming, REVEAL_DURATION_MS } from '../../lib/work-reveal';
 
 interface Props {
   project: CollectionEntry<'projects'>;
+  /* When this row's reveal begins, in ms since page load — see
+     work-reveal.ts. WorkSection.astro hands each row the point its
+     predecessor's own reveal finishes, so rows play project by project
+     down the page rather than all firing at once. */
+  startOffsetMs: number;
 }
 
-const { project: p } = Astro.props;
+const { project: p, startOffsetMs } = Astro.props;
+
+/* Everything in this row — eyebrow, title, thesis, role, outcome, skills,
+   CTA, and the cover image — fades up together at the same delay, once the
+   cover has settled into place. The timing math itself lives in
+   work-reveal.ts, shared with WorkSection.astro, which needs the identical
+   formula to know how long this row's reveal takes before handing the next
+   row its own startOffsetMs. */
+const { revealDelayMs } = computeRowTiming(startOffsetMs);
 ---
 
-<li class="work__row" data-work-row={p.id}>
-  <a class="work__link" href={`/work/${p.id}/`}>
+<li class="work__row" id={p.id} data-work-row={p.id}>
+  <a
+    class="work__link"
+    href={`/work/${p.id}/`}
+    style={`--reveal-delay: ${revealDelayMs}ms; --reveal-duration: ${REVEAL_DURATION_MS}ms`}
+  >
     {/* Paired with the same name on the case study cover, so the
         image morphs across the navigation rather than reloading. */}
     <div
@@ -39,14 +57,15 @@ const { project: p } = Astro.props;
       </p>
 
       <h3 class="work__title t-h2">{p.data.title}</h3>
+
       <p class="work__thesis t-lead">{p.data.thesis}</p>
 
       <dl class="work__facts">
-        <div class="work__fact">
+        <div class="work__fact work__fact--role">
           <dt class="t-mono">Role</dt>
           <dd>{p.data.role}</dd>
         </div>
-        <div class="work__fact">
+        <div class="work__fact work__fact--outcome">
           <dt class="t-mono">Outcome</dt>
           <dd class="work__outcome">{p.data.outcome}</dd>
         </div>
@@ -87,7 +106,11 @@ const { project: p } = Astro.props;
     position: relative;
     overflow: hidden;
     border-radius: var(--r-md);
-    background: var(--surface-01);
+    /* True black, not --surface-01 — the covers have transparent
+       backgrounds, so a "recessed panel" grey shows through as a visible
+       box against the page's true-black background instead of disappearing
+       into it. Same reasoning as .case__cover on the case study page. */
+    background: var(--void);
     box-shadow:
       var(--shadow-inset),
       var(--shadow-ambient);
@@ -99,6 +122,42 @@ const { project: p } = Astro.props;
     width: calc(var(--h) * var(--arn, 1));
     max-width: 100%;
     aspect-ratio: var(--arn, 1);
+    /* Slides in from whichever side it actually sits on (WorkSection.astro's
+       alternating layout overrides --media-enter-x to the opposite sign for
+       rows where .work__media sits on the right), at the same delay as the
+       rest of the row — image and text arrive together. */
+    --media-enter-x: -1.5rem;
+    opacity: 0;
+    transform: translateX(var(--media-enter-x));
+    animation: work-media-in var(--reveal-duration) var(--e-out) forwards;
+    animation-delay: var(--reveal-delay);
+  }
+
+  @keyframes work-media-in {
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  /* The row currently landed on via the back-navigation FLIP (see
+     cover-flip.ts and Base.astro's settle() script) already has its own
+     JS-driven shrink-into-place animation for this exact element — this
+     reveal would otherwise fight it for control of opacity/transform. :target
+     matches by URL fragment, the same signal the FLIP script itself keys
+     off, so no JS coordination is needed here. */
+  .work__row:target .work__media {
+    opacity: 1;
+    transform: none;
+    animation: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .work__media {
+      opacity: 1;
+      transform: none;
+      animation: none;
+    }
   }
 
   .work__img {
@@ -132,12 +191,56 @@ const { project: p } = Astro.props;
   }
 
   /* --- Body ------------------------------------------------------------- */
+  /* Same reasoning as .case__head on the case study page: the shared-element
+     cover is still animating into this row's media slot for a few hundred ms
+     after the home page has "loaded" (most visibly on the way back from a
+     case study, where the cover is shrinking down from full-bleed into this
+     card), and that overlay renders above normal page content regardless of
+     DOM order. Holding the text back until the group animation settles, then
+     fading it up, means there's nothing here yet for the image to sweep
+     across. Eyebrow, title, thesis, role, outcome, skills and the CTA all
+     fade up together at --reveal-delay (set on .work__link, inherited
+     down, from the frontmatter) — one arrival rather than a sequence. */
+  .work__eyebrow,
+  .work__title,
+  .work__thesis,
+  .work__fact--role,
+  .work__fact--outcome,
+  .work__stack,
+  .work__cta {
+    opacity: 0;
+    transform: translateY(0.5rem);
+    animation: work-fade-in var(--reveal-duration) var(--e-out) forwards;
+    animation-delay: var(--reveal-delay);
+  }
+
   .work__eyebrow {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 0.5rem;
     margin-bottom: var(--s-4);
+  }
+
+  @keyframes work-fade-in {
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .work__eyebrow,
+    .work__title,
+    .work__thesis,
+    .work__fact--role,
+    .work__fact--outcome,
+    .work__stack,
+    .work__cta {
+      opacity: 1;
+      transform: none;
+      animation: none;
+    }
   }
 
   .work__discipline {
@@ -261,6 +364,13 @@ const { project: p } = Astro.props;
       grid-row: 1;
       --h: clamp(3rem, 9vw, 4rem);
       box-shadow: var(--shadow-inset);
+      /* Same reasoning as dropping the shared-element morph below: at icon
+         size a slide-in reads as a small graphic twitching next to the
+         text beside it, so the horizontal entrance is dropped — but it
+         still fades in on the row's own --reveal-delay same as everything
+         else in it, rather than every row's icon being visible up front
+         regardless of whose turn it is in the project-by-project cascade. */
+      --media-enter-x: 0;
     }
 
     /* The bottom-fade sheen exists so text overlaid on a full-size banner

@@ -83,6 +83,162 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
       })();
     </script>
 
+    {/* A cross-document view transition captures the incoming page's snapshot
+        before the browser applies a URL fragment's scroll position — so any
+        navigation that lands on a hash (nav links, the case study's "All
+        work" back link) briefly shows the page scrolled to the top mid-
+        transition, then jumps to the right spot once the transition ends.
+        Skipping the transition whenever the destination carries a hash
+        sidesteps the race entirely: with no transition to capture a
+        snapshot, the browser just scrolls to the fragment before first
+        paint, same as it always reliably does without view-transitions
+        involved. Plain page-to-page navigation (no hash) is unaffected and
+        keeps the root crossfade and shared-element cover morph. */}
+    <script is:inline>
+      (function () {
+        if (!location.hash) return;
+        // The browser needs a couple of frames after first paint to resolve
+        // where the fragment target actually is and jump there, so a hash
+        // load briefly paints scrolled to the top before snapping down —
+        // the "flash of hero" on the way back from a case study. Hiding the
+        // page until that jump has actually happened (signalled by the
+        // scroll event it fires) means the page only ever becomes visible
+        // already in its final position. 200ms fallback covers the
+        // edge case where the target sits at the very top and no scroll
+        // event fires at all, so hiding can't wait on it forever.
+        var el = document.documentElement;
+        el.style.visibility = 'hidden';
+
+        // cover-flip.ts stores the case study cover's rect just before the
+        // "All work" link navigates away. Reading it back here recreates the
+        // shared-element morph the skipped view transition would have done:
+        // the row's own media box starts at that rect (via transform, so it
+        // costs no layout) and animates down to its natural size/position,
+        // rather than just appearing already settled.
+        var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var revealed = false;
+        // Matches the transform transition duration below — kept as one
+        // constant since rebaseWorkReveal() also needs it, to hold the
+        // target row's text back until the image has actually finished
+        // returning to its resting size/position.
+        var FLIP_DURATION_MS = 460;
+
+        // WorkSection.astro times each row's reveal (see work-reveal.ts) as
+        // if the whole list were playing start to finish, so a project
+        // further down the page carries a large absolute delay baked into
+        // its markup — CSS alone (:has(:target), used for the rows ABOVE
+        // this one — see WorkSection.astro) can hide those without needing
+        // this, but can't shift a live animation-delay's actual value.
+        // Landing here via the back-navigation FLIP means the visitor is
+        // looking at exactly this row already, so its reveal (and every row
+        // after it) should play as if the sequence started here: subtract
+        // this row's own delay from --reveal-delay on it and every row from
+        // it onward (minus holdBackMs, which pins the target's own start no
+        // earlier than that instead of exactly zero), run entirely before
+        // the page is ever revealed below so there's no flash of the
+        // original timing first.
+        function rebaseWorkReveal(holdBackMs) {
+          var hash = location.hash.slice(1);
+          var rows = document.querySelectorAll('.work__row');
+          var targetIndex = -1;
+          for (var i = 0; i < rows.length; i++) {
+            if (rows[i].id === hash) {
+              targetIndex = i;
+              break;
+            }
+          }
+          if (targetIndex === -1) return;
+
+          function msValue(el) {
+            return parseFloat(getComputedStyle(el).getPropertyValue('--reveal-delay')) || 0;
+          }
+
+          var targetLink = rows[targetIndex].querySelector('.work__link');
+          if (!targetLink) return;
+          var shiftMs = msValue(targetLink) - holdBackMs;
+          if (shiftMs === 0) return;
+
+          for (var j = targetIndex; j < rows.length; j++) {
+            var link = rows[j].querySelector('.work__link');
+            if (!link) continue;
+            link.style.setProperty('--reveal-delay', Math.max(0, msValue(link) - shiftMs) + 'ms');
+          }
+        }
+
+        function settle() {
+          if (revealed) return;
+          revealed = true;
+
+          var media = null;
+          var stored = null;
+          if (!reduced) {
+            try {
+              var raw = sessionStorage.getItem('coverFlip');
+              sessionStorage.removeItem('coverFlip');
+              stored = raw && JSON.parse(raw);
+              if (stored && stored.id === location.hash.slice(1)) {
+                var row = document.getElementById(stored.id);
+                media = row && row.querySelector('.work__media');
+              }
+            } catch (e) {
+              media = null;
+            }
+          }
+
+          // The image finishing its return to the row is the cue the rest
+          // of this row's text waits for — holding it back until then (media
+          // is only set when the FLIP is actually playing; a direct hash
+          // visit, where the image just appears already settled, is
+          // unaffected) avoids the enlarged image mid-shrink overlapping
+          // text beside or below it, which is most visible on mobile's
+          // tight single-row layout but applies everywhere the FLIP runs.
+          rebaseWorkReveal(media ? FLIP_DURATION_MS : 0);
+
+          if (media) {
+            var dest = media.getBoundingClientRect();
+            media.style.transformOrigin = 'top left';
+            media.style.transform =
+              'translate(' +
+              (stored.left - dest.left) +
+              'px,' +
+              (stored.top - dest.top) +
+              'px) scale(' +
+              stored.width / dest.width +
+              ',' +
+              stored.height / dest.height +
+              ')';
+          }
+
+          el.style.visibility = '';
+
+          if (media) {
+            requestAnimationFrame(function () {
+              media.style.transition = 'transform ' + FLIP_DURATION_MS + 'ms var(--e-out)';
+              media.style.transform = 'none';
+            });
+            media.addEventListener(
+              'transitionend',
+              function () {
+                media.style.transition = '';
+                media.style.transformOrigin = '';
+              },
+              { once: true }
+            );
+          }
+        }
+
+        window.addEventListener('scroll', settle, { once: true, passive: true });
+        setTimeout(settle, 200);
+      })();
+    </script>
+    <script is:inline>
+      window.addEventListener('pagereveal', (e) => {
+        if (e.viewTransition && location.hash) {
+          e.viewTransition.skipTransition();
+        }
+      });
+    </script>
+
     {/* Intro gate.
 
         Decided synchronously before first paint, because the CSS that hides
@@ -141,12 +297,14 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
       import { initMagnetic } from '../scripts/magnetic';
       import { initStackField } from '../scripts/stack-field';
       import { initRain } from '../scripts/rain';
+      import { initCoverFlip } from '../scripts/cover-flip';
 
       initSmoothScroll();
       initGlassLighting();
       initMagnetic();
       initStackField();
       initRain();
+      initCoverFlip();
     </script>
   </body>
 </html>

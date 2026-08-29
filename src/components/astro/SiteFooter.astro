@@ -1,21 +1,17 @@
 ---
-import { site, links } from '../../data/site';
-const year = new Date().getFullYear();
+import { site } from '../../data/site';
 ---
 
 <footer class="footer">
   <div class="shell footer__inner">
-    <span class="footer__mark t-mono">{site.monogram}</span>
-    <nav class="footer__links" aria-label="Elsewhere">
-      {
-        links.map((l) => (
-          <a class="footer__link t-mono" href={l.href} target="_blank" rel="noreferrer noopener">
-            {l.label}
-          </a>
-        ))
-      }
-    </nav>
-    <span class="footer__meta t-mono">{site.location} · {year}</span>
+    {/* href="/#hero" rides the same in-page anchor handler every other nav
+        link uses (see smooth-scroll.ts) — Lenis smoothly scrolls back to
+        the hero on the home page; from any other page it's a normal
+        navigation to the home page landing on the hero, same as clicking
+        the nav's own WW mark. */}
+    <a class="footer__mark t-mono" href="/#hero" aria-label={`${site.monogram}, back to top`}>
+      {site.monogram}
+    </a>
   </div>
 </footer>
 
@@ -24,35 +20,26 @@ const year = new Date().getFullYear();
     position: relative;
     z-index: var(--z-content);
     border-top: 1px solid var(--bone-08);
-    padding-block: var(--s-8);
+    margin-top: var(--s-16);
+    padding-block: var(--s-12);
   }
 
   .footer__inner {
     display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--s-6);
+    justify-content: center;
   }
 
   .footer__mark {
     font-family: var(--font-display);
-    font-size: 0.875rem;
+    font-size: 1rem;
     font-weight: 700;
     letter-spacing: 0.14em;
     color: var(--bone-55);
-  }
-
-  .footer__links {
-    display: flex;
-    gap: var(--s-6);
-  }
-
-  .footer__link {
     transition: color var(--d-base) var(--e-out);
   }
 
-  .footer__link:hover {
+  .footer__mark:hover,
+  .footer__mark:focus-visible {
     color: var(--bone);
   }
 </style>

@@ -13,17 +13,57 @@
   navigation: auto;
 }
 
+/* The transition overlay is a separate rendering layer stacked above the
+   normal document, with its own default background — setting one on html
+   (below) does not reach it. During the root crossfade, old and new are
+   each partially transparent (opacity-based fade) everywhere except the
+   two endpoints, so without this, whatever's behind them — the overlay's
+   own default, not the page's black — shows through as a grey/white flash
+   for the middle of every navigation, even though both pages are black. */
+::view-transition {
+  background-color: var(--void);
+}
+
 ::view-transition-old(root),
 ::view-transition-new(root) {
-  animation-duration: 320ms;
-  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  /* !important: outweighs the general old/new(*) rule below regardless of
+     source order, so root keeps its own real crossfade while that rule
+     kills the crossfade for every *named* pair (root has no name of its
+     own to exclude it by, since * matches root too). */
+  animation-duration: 320ms !important;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
 /* A project cover morphs from its row on the home page into the case study
-   header. Pairing is by shared view-transition-name, set per project id. */
+   header. Pairing is by shared view-transition-name, set per project id.
+   Same --e-out deceleration as the root crossfade above (and everywhere
+   else on the site) rather than a distinct S-curve — that curve's sharp
+   middle-of-the-animation acceleration read as the image overshooting its
+   target size and correcting back, even though it's mathematically
+   monotonic. A plain ease-out just arrives at the right size once. */
 ::view-transition-group(*) {
   animation-duration: 420ms;
-  animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
+  animation-timing-function: var(--e-out);
+}
+
+/* The card's icon is unpadded and square; the case-study cover is
+   letterboxed inside a wider box (deliberately, so square covers don't get
+   force-cropped — see .case__cover). Old and new snapshots of the same
+   project cover therefore don't share the same internal scale or position,
+   so the UA default's gradual crossfade between them shows both at once,
+   misaligned, for the first chunk of the animation — a visible doubled
+   ghost of every bright edge, worse now that the background's transparent
+   rather than a solid square masking the overlap. Collapsing the crossfade
+   to near-zero turns this into what it should be: the group's own
+   position/size transform carries all the motion, with exactly one image
+   — the destination's — visible throughout, not two blending mid-flight.
+   mix-blend-mode: normal (rather than the UA's plus-lighter, meant for
+   photographs) keeps that one image's own colour instead of an additive
+   glow, for the instant where old and new do still technically overlap. */
+::view-transition-old(*),
+::view-transition-new(*) {
+  animation-duration: 1ms;
+  mix-blend-mode: normal;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -49,6 +89,11 @@ html {
   -webkit-text-size-adjust: 100%;
   /* Lenis drives scrolling on capable devices; native smooth would fight it. */
   scroll-behavior: auto;
+  /* body paints --void too, but the cross-document view-transition root
+     snapshot composites against html's own background, not body's — with
+     nothing set here it defaults to white, so every page navigation
+     flashed white for a frame despite the page itself always being black. */
+  background: var(--void);
 }
 
 /* Anchor jumps still need to clear the floating nav when Lenis is off. */

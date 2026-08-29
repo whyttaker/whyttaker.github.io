@@ -34,7 +34,10 @@ const facts = [
 <Base title={d.title} description={d.thesis}>
   <article class="case">
     <div class="shell">
-      <a class="case__back t-mono" href="/#work">
+      {/* Points at this project's own row, not just the section top — lands
+          back where the visitor actually was rather than at the top of the
+          list. See WorkRow.astro for the matching id on each row. */}
+      <a class="case__back t-mono" href={`/#${project.id}`}>
         <span aria-hidden="true">&#8592;</span> All work
       </a>
 
@@ -48,19 +51,28 @@ const facts = [
         <p class="case__tagline t-lead">{d.tagline}</p>
       </header>
 
-      <figure
-        class="case__cover"
-        style={`view-transition-name: cover-${project.id}; --arn: ${(d.cover.width / d.cover.height).toFixed(4)}`}
-      >
-        <Image
-          src={d.cover}
-          alt={d.coverAlt}
-          widths={[640, 1000, 1500]}
-          sizes="(min-width: 78rem) 74rem, 94vw"
-          loading="eager"
-          fetchpriority="high"
-          class="case__cover-img"
-        />
+      <figure class="case__cover">
+        {/* Paired with the same name on the home page card. That card
+            (.work__media) is always sized tightly to the cover's own aspect
+            ratio, with no letterboxing — putting the name on this frame
+            (sized the same way, rather than on the wide, height-capped
+            .case__cover box below) keeps the two ends of the morph the same
+            shape throughout, instead of the image content snapping to its
+            letterboxed layout the moment the transition starts. */}
+        <div
+          class="case__cover-frame"
+          style={`view-transition-name: cover-${project.id}; --arn: ${(d.cover.width / d.cover.height).toFixed(4)}`}
+        >
+          <Image
+            src={d.cover}
+            alt={d.coverAlt}
+            widths={[640, 1000, 1500]}
+            sizes="(min-width: 78rem) 74rem, 94vw"
+            loading="eager"
+            fetchpriority="high"
+            class="case__cover-img"
+          />
+        </div>
       </figure>
 
       <div class="case__body">
@@ -121,6 +133,34 @@ const facts = [
   .case__head {
     max-width: 46rem;
     margin-bottom: var(--s-12);
+    /* The cover below morphs in via a shared view-transition (desktop) or a
+       plain cross-fade (mobile, see WorkRow.astro) — either way it's still
+       moving into its final position for a few hundred ms after the page
+       is technically "loaded". The view-transition overlay that carries it
+       renders in the browser's top layer, above all normal page content
+       regardless of DOM order or z-index, so text sitting here at full
+       opacity from the first frame gets visibly swept over as the image
+       travels past on its way to its resting spot. Holding the header back
+       until that's done — same soft fade-up the hero uses — means there's
+       nothing here yet for the image to cover. */
+    opacity: 0;
+    transform: translateY(0.6rem);
+    animation: case-head-in 700ms var(--e-out) 450ms forwards;
+  }
+
+  @keyframes case-head-in {
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .case__head {
+      opacity: 1;
+      transform: none;
+      animation: none;
+    }
   }
 
   .case__eyebrow {
@@ -143,27 +183,47 @@ const facts = [
   }
 
   /* --- Cover ------------------------------------------------------------- */
+  /* A fixed-height stage rather than an aspect-ratio box: real covers here
+     all exceed the height cap at shell width regardless of their own ratio
+     (even the widest, 16:9 retro-racer, needs more height than the cap
+     allows), so a fixed height matches what every current cover already
+     renders as while staying simple to reason about. .case__cover-frame
+     below is what actually holds and sizes the image. */
   .case__cover {
     margin-bottom: var(--sp-section);
-    border-radius: var(--r-md);
-    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: clamp(22rem, 46vw, 40rem);
     /* True black, not --surface-01 — a "recessed panel" grey reads as a
        visible box the moment it letterboxes a square cover, since even a
        10-in-255 lift off pure black is obvious against a solid true-black
        page. Matching --void lets the pillars disappear into the page. */
     background: var(--void);
+  }
+
+  /* Sized to the cover's own ratio, shrinking to fit the stage rather than
+     filling it and letterboxing internally — the square icon marks (SimBot,
+     DUB→ZAZ, H&J Cabinets) were getting their logos sliced off by a forced
+     21:9 object-fit: cover, and a full-width box with internal letterboxing
+     made the shared-element morph mismatch the home page card's own
+     tightly-fit shape (see WorkRow.astro's .work__media), which showed up as
+     the image jumping to its letterboxed layout the instant the transition
+     started. The border-radius/shadow/overflow that used to live on
+     .case__cover move here too, so both ends of the morph carry the same
+     "card" chrome rather than it popping in or out mid-transition. */
+  .case__cover-frame {
+    position: relative;
+    height: 100%;
+    width: auto;
+    max-width: 100%;
+    aspect-ratio: var(--arn, 21 / 9);
+    border-radius: var(--r-md);
+    overflow: hidden;
     box-shadow:
       var(--shadow-inset),
       var(--shadow-ambient);
-    /* Sized to each cover's own ratio rather than a fixed widescreen crop —
-       the square icon marks (SimBot, DUB→ZAZ, H&J Cabinets) were getting
-       their logos sliced off by a forced 21:9 object-fit: cover. The height
-       cap keeps those square/near-square covers from towering over the page
-       at full shell width; object-fit: contain then letterboxes cleanly
-       instead of cropping. */
-    width: 100%;
-    aspect-ratio: var(--arn, 21 / 9);
-    max-height: clamp(22rem, 46vw, 40rem);
   }
 
   .case__cover-img {
@@ -263,7 +323,7 @@ const facts = [
     }
 
     .case__cover {
-      max-height: clamp(18rem, 80vw, 28rem);
+      height: clamp(18rem, 80vw, 28rem);
     }
   }
 

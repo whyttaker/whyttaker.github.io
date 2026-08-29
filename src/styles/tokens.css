@@ -66,13 +66,16 @@
   --s-4: 1rem;
   --s-6: 1.5rem;
   --s-8: 2rem;
+  --s-10: 2.5rem;
   --s-12: 3rem;
   --s-16: 4rem;
   --s-24: 6rem;
   --s-32: 8rem;
   --s-48: 12rem;
+  --s-54: 13.5rem;
+  --s-60: 15rem;
 
-  --sp-section: clamp(6rem, 14vh, 12rem);
+  --sp-section: clamp(3.5rem, 8vh, 7rem);
   --gutter: clamp(1.25rem, 5vw, 5rem);
   --measure: 68ch;
   --max-w: 88rem;

@@ -2,6 +2,7 @@
 import { getCollection } from 'astro:content';
 import SectionHead from './SectionHead.astro';
 import WorkRow from './WorkRow.astro';
+import { computeRowTiming, ROW_GAP_MS } from '../../lib/work-reveal';
 
 const allProjects = (await getCollection('projects')).sort(
   (a, b) => a.data.order - b.data.order
@@ -9,6 +10,16 @@ const allProjects = (await getCollection('projects')).sort(
 
 const professional = allProjects.filter((p) => p.data.category === 'professional');
 const personal = allProjects.filter((p) => p.data.category === 'personal');
+
+/* Each row's reveal starts only once the previous one has fully finished
+   (see work-reveal.ts) — project by project down the page, professional
+   list into personal, rather than every row animating at once. */
+let cursorMs = 0;
+function nextStartOffset(): number {
+  const start = cursorMs;
+  cursorMs = computeRowTiming(start).rowEndMs + ROW_GAP_MS;
+  return start;
+}
 ---
 
 <section class="section" id="work">
@@ -24,7 +35,7 @@ const personal = allProjects.filter((p) => p.data.category === 'personal');
 
           <ol class="work" data-work-list="professional">
             {professional.map((p) => (
-              <WorkRow project={p} />
+              <WorkRow project={p} startOffsetMs={nextStartOffset()} />
             ))}
           </ol>
         </div>
@@ -36,7 +47,7 @@ const personal = allProjects.filter((p) => p.data.category === 'personal');
 
       <ol class="work" data-work-list="personal">
         {personal.map((p) => (
-          <WorkRow project={p} />
+          <WorkRow project={p} startOffsetMs={nextStartOffset()} />
         ))}
       </ol>
     </div>
@@ -53,7 +64,7 @@ const personal = allProjects.filter((p) => p.data.category === 'personal');
   .work {
     display: flex;
     flex-direction: column;
-    gap: clamp(4rem, 9vw, 9rem);
+    gap: clamp(2.5rem, 4.5vw, 4.5rem);
   }
 
   /* The desktop gap is tuned for full-width alternating rows with a large
@@ -68,6 +79,41 @@ const personal = allProjects.filter((p) => p.data.category === 'personal');
     }
   }
 
+  /* On a hash landing (the back-navigation FLIP — see cover-flip.ts and
+     Base.astro's settle() script), :target marks which row that is. Rows
+     ahead of it in reading order have already been scrolled past — the
+     project-by-project cascade below (see work-reveal.ts) is only
+     meaningful for the row the visitor actually landed on and whatever
+     comes after it, so those earlier rows just show immediately instead of
+     making the visitor wait through a sequence they never see start.
+     :has(~ …) reaches later siblings within one list; the .work-group
+     variant reaches whole earlier groups (Professional vs Personal are
+     separate lists, not siblings of each other) when the target sits in a
+     later one. Both are no-ops with no hash present, since nothing matches
+     :target then. */
+  :global(
+    :is(
+      .work-group:has(~ .work-group .work__row:target) .work__row,
+      .work__row:has(~ .work__row:target)
+    )
+      :is(
+        .work__eyebrow,
+        .work__title,
+        .work__thesis,
+        .work__fact--role,
+        .work__fact--outcome,
+        .work__stack,
+        .work__cta,
+        .work__media
+      )
+  ) {
+    opacity: 1;
+    transform: none;
+    animation: none;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+
   /* Alternate the reading direction so the page has a rhythm instead of a
      column. Only on wide screens — stacked layouts always lead with media. */
   @media (min-width: 60rem) {
@@ -75,9 +121,13 @@ const personal = allProjects.filter((p) => p.data.category === 'personal');
       grid-template-columns: minmax(0, 1fr) auto;
     }
 
+    /* --media-enter-x flips the sign of .work__media's own entrance slide
+       (see WorkRow.astro) so it comes in from whichever side it actually
+       sits on here, rather than always from the left. */
     :global([data-work-list='professional'] .work__row:nth-child(even) .work__media) {
       order: 2;
       justify-self: end;
+      --media-enter-x: 1.5rem;
     }
 
     /* Personal Projects opens on the opposite side from where Professional
@@ -91,6 +141,7 @@ const personal = allProjects.filter((p) => p.data.category === 'personal');
     :global([data-work-list='personal'] .work__row:nth-child(odd) .work__media) {
       order: 2;
       justify-self: end;
+      --media-enter-x: 1.5rem;
     }
   }
 </style>
